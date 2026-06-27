@@ -8,8 +8,6 @@ E:\desktop\Control-OS-Lunix\Control-OS-Lunix\bin\Debug\net8.0-windows\Microsoft.
 E:\desktop\Control-OS-Lunix\Control-OS-Lunix\bin\Debug\net8.0-windows\Microsoft.Extensions.Logging.Abstractions.dll
 E:\desktop\Control-OS-Lunix\Control-OS-Lunix\bin\Debug\net8.0-windows\Renci.SshNet.dll
 E:\desktop\Control-OS-Lunix\Control-OS-Lunix\obj\Debug\net8.0-windows\Control-OS-Linux.csproj.AssemblyReference.cache
-E:\desktop\Control-OS-Lunix\Control-OS-Lunix\obj\Debug\net8.0-windows\Control_OS_Lunix.Form1.resources
-E:\desktop\Control-OS-Lunix\Control-OS-Lunix\obj\Debug\net8.0-windows\Control-OS-Linux.csproj.GenerateResource.cache
 E:\desktop\Control-OS-Lunix\Control-OS-Lunix\obj\Debug\net8.0-windows\Control-OS-Linux.GeneratedMSBuildEditorConfig.editorconfig
 E:\desktop\Control-OS-Lunix\Control-OS-Lunix\obj\Debug\net8.0-windows\Control-OS-Linux.AssemblyInfoInputs.cache
 E:\desktop\Control-OS-Lunix\Control-OS-Lunix\obj\Debug\net8.0-windows\Control-OS-Linux.AssemblyInfo.cs
@@ -20,5 +18,5 @@ E:\desktop\Control-OS-Lunix\Control-OS-Lunix\obj\Debug\net8.0-windows\refint\Con
 E:\desktop\Control-OS-Lunix\Control-OS-Lunix\obj\Debug\net8.0-windows\Control-OS-Linux.pdb
 E:\desktop\Control-OS-Lunix\Control-OS-Lunix\obj\Debug\net8.0-windows\Control-OS-Linux.genruntimeconfig.cache
 E:\desktop\Control-OS-Lunix\Control-OS-Lunix\obj\Debug\net8.0-windows\ref\Control-OS-Linux.dll
-E:\desktop\Control-OS-Lunix\Control-OS-Lunix\obj\Debug\net8.0-windows\Control_OS_Lunix.LogsForm.resources
 E:\desktop\Control-OS-Lunix\Control-OS-Lunix\obj\Debug\net8.0-windows\Control-OS-Linux.sourcelink.json
+E:\desktop\Control-OS-Lunix\Control-OS-Lunix\bin\Debug\net8.0-windows\Microsoft.Extensions.DependencyInjection.dll

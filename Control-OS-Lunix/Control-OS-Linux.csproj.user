@@ -1,19 +1,19 @@
 ﻿<?xml version="1.0" encoding="utf-8"?>
 <Project ToolsVersion="Current" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
   <ItemGroup>
-    <Compile Update="DeviceDialogForm.cs">
+    <Compile Update="UI\Views\DeviceDialogView.cs">
       <SubType>Form</SubType>
     </Compile>
-    <Compile Update="MainDashboardForm.cs">
+    <Compile Update="UI\Views\LogsView.cs">
       <SubType>Form</SubType>
     </Compile>
-    <Compile Update="LogsForm.cs">
+    <Compile Update="UI\Views\MainDashboardView.cs">
       <SubType>Form</SubType>
     </Compile>
-    <Compile Update="NetworkScannerForm.cs">
+    <Compile Update="UI\Views\NetworkScannerView.cs">
       <SubType>Form</SubType>
     </Compile>
-    <Compile Update="SettingsDialogForm.cs">
+    <Compile Update="UI\Views\SettingsView.cs">
       <SubType>Form</SubType>
     </Compile>
   </ItemGroup>

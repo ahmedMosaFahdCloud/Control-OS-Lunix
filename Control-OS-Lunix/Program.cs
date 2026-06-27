@@ -1,17 +1,22 @@
-namespace Control_OS_Lunix
+using Control_OS_Lunix.Composition;
+using Control_OS_Lunix.UI.Controllers;
+using Control_OS_Lunix.UI.Views;
+using Microsoft.Extensions.DependencyInjection;
+
+namespace Control_OS_Lunix;
+
+internal static class Program
 {
-    internal static class Program
+    [STAThread]
+    private static void Main()
     {
-        /// <summary>
-        ///  The main entry point for the application.
-        /// </summary>
-        [STAThread]
-        static void Main()
-        {
-            // To customize application configuration such as set high DPI settings or default font,
-            // see https://aka.ms/applicationconfiguration.
-            ApplicationConfiguration.Initialize();
-            Application.Run(new MainDashboardForm());
-        }
+        ApplicationConfiguration.Initialize();
+
+        using ServiceProvider serviceProvider = ServiceRegistration.BuildServiceProvider();
+        var mainView = serviceProvider.GetRequiredService<MainDashboardView>();
+        var mainController = serviceProvider.GetRequiredService<IMainDashboardController>();
+        mainController.AttachView(mainView);
+
+        Application.Run(mainView);
     }
 }
