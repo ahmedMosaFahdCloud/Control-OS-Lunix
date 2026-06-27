@@ -2,6 +2,7 @@ using System.Runtime.InteropServices;
 using Control_OS_Lunix.Backend.Interfaces;
 using Control_OS_Lunix.Backend.Models;
 using Control_OS_Lunix.Backend.Results;
+using Control_OS_Lunix.Backend.Services;
 using Control_OS_Lunix.UI.ViewModels;
 using Control_OS_Lunix.UI.Views;
 using Microsoft.Extensions.DependencyInjection;
@@ -13,6 +14,7 @@ public sealed class MainDashboardController : IMainDashboardController
     private const int ShutdownPriorityLate = 0x3FF;
 
     private readonly IConfigurationStore _configurationStore;
+    private readonly IBackupRestoreService _backupRestoreService;
     private readonly ILogService _logService;
     private readonly IDevicePowerService _devicePowerService;
     private readonly IControllerOrchestrator _controllerOrchestrator;
@@ -26,12 +28,14 @@ public sealed class MainDashboardController : IMainDashboardController
 
     public MainDashboardController(
         IConfigurationStore configurationStore,
+        IBackupRestoreService backupRestoreService,
         ILogService logService,
         IDevicePowerService devicePowerService,
         IControllerOrchestrator controllerOrchestrator,
         IServiceProvider serviceProvider)
     {
         _configurationStore = configurationStore;
+        _backupRestoreService = backupRestoreService;
         _logService = logService;
         _devicePowerService = devicePowerService;
         _controllerOrchestrator = controllerOrchestrator;
@@ -53,6 +57,8 @@ public sealed class MainDashboardController : IMainDashboardController
         _view.RefreshRequested += async (_, _) => await ExecuteAsync(RefreshStatusesAsync);
         _view.SettingsRequested += async (_, _) => await ExecuteAsync(HandleSettingsRequestedAsync);
         _view.LogsRequested += async (_, _) => await ExecuteAsync(HandleLogsRequestedAsync);
+        _view.BackupRequested += (_, _) => HandleBackupRequested();
+        _view.RestoreRequested += async (_, _) => await ExecuteAsync(HandleRestoreRequestedAsync);
         _view.ViewClosing += HandleViewClosing;
         _view.WindowsShutdownHandler = HandleWindowsShutdown;
     }
@@ -176,6 +182,70 @@ public sealed class MainDashboardController : IMainDashboardController
         if (!result.IsSuccess)
         {
             _view.ShowError(result.Message, "Logs");
+        }
+    }
+
+    private void HandleBackupRequested()
+    {
+        string? backupPath = _view!.PickBackupPath(ApplicationPaths.CreateDefaultBackupFilePath());
+        if (string.IsNullOrWhiteSpace(backupPath))
+        {
+            return;
+        }
+
+        Result result = _backupRestoreService.CreateBackup(backupPath);
+        if (!result.IsSuccess)
+        {
+            _view.ShowError(result.Message, "Backup Data");
+            return;
+        }
+
+        _view.SetStatus($"Backup created at '{Path.GetFileName(backupPath)}'.");
+        _view.ShowInfo(result.Message, "Backup Data");
+    }
+
+    private async Task HandleRestoreRequestedAsync()
+    {
+        string? restorePath = _view!.PickRestorePath();
+        if (string.IsNullOrWhiteSpace(restorePath))
+        {
+            return;
+        }
+
+        if (!_view.Confirm("Restore data from the selected backup file? This will overwrite the current saved configuration and logs.", "Restore Data"))
+        {
+            return;
+        }
+
+        _view.SetBusy(true);
+        _view.SetStatus("Restoring application data from backup...");
+
+        try
+        {
+            Result restoreResult = _backupRestoreService.RestoreBackup(restorePath);
+            if (!restoreResult.IsSuccess)
+            {
+                _view.ShowError(restoreResult.Message, "Restore Data");
+                return;
+            }
+
+            Result<AppConfiguration> loadResult = _configurationStore.Load();
+            if (!loadResult.IsSuccess || loadResult.Value is null)
+            {
+                _view.ShowError(loadResult.Message, "Restore Data");
+                return;
+            }
+
+            _configuration = loadResult.Value;
+            _logService.EnforceRetention(_configuration.GlobalSettings.LogRetentionDays);
+            RenderConfiguration();
+            await RefreshStatusesAsync();
+            _view.SetStatus($"Backup restored from '{Path.GetFileName(restorePath)}'.");
+            _view.ShowInfo(restoreResult.Message, "Restore Data");
+        }
+        finally
+        {
+            _view.SetBusy(false);
         }
     }
 

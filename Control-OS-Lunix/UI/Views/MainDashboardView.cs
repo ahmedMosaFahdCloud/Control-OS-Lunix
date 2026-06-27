@@ -23,6 +23,8 @@ public sealed class MainDashboardView : Form, IMainDashboardView
     private readonly Button _refreshButton = CreateActionButton("Refresh Status");
     private readonly Button _settingsButton = CreateActionButton("Settings");
     private readonly Button _logsButton = CreateActionButton("View Logs");
+    private readonly Button _backupButton = CreateActionButton("Backup Data");
+    private readonly Button _restoreButton = CreateActionButton("Restore Data");
 
     public MainDashboardView()
     {
@@ -48,6 +50,8 @@ public sealed class MainDashboardView : Form, IMainDashboardView
     public event EventHandler? RefreshRequested;
     public event EventHandler? SettingsRequested;
     public event EventHandler? LogsRequested;
+    public event EventHandler? BackupRequested;
+    public event EventHandler? RestoreRequested;
     public event FormClosingEventHandler? ViewClosing;
 
     public Func<WindowsShutdownDecision>? WindowsShutdownHandler { get; set; }
@@ -90,7 +94,8 @@ public sealed class MainDashboardView : Form, IMainDashboardView
         foreach (Control control in new Control[]
                  {
                      _addButton, _scanButton, _editButton, _deleteButton, _startButton, _rebootButton,
-                     _shutdownButton, _refreshButton, _settingsButton, _logsButton, _deviceGrid
+                     _shutdownButton, _refreshButton, _settingsButton, _logsButton, _backupButton,
+                     _restoreButton, _deviceGrid
                  })
         {
             control.Enabled = !isBusy;
@@ -106,6 +111,32 @@ public sealed class MainDashboardView : Form, IMainDashboardView
     public void ShowWarning(string message, string title) => MessageBox.Show(this, message, title, MessageBoxButtons.OK, MessageBoxIcon.Warning);
     public void ShowError(string message, string title) => MessageBox.Show(this, message, title, MessageBoxButtons.OK, MessageBoxIcon.Error);
     public bool Confirm(string message, string title) => MessageBox.Show(this, message, title, MessageBoxButtons.YesNo, MessageBoxIcon.Question) == DialogResult.Yes;
+    public string? PickBackupPath(string suggestedPath)
+    {
+        using SaveFileDialog dialog = new()
+        {
+            Title = "Create Backup",
+            Filter = "Backup Archive (*.zip)|*.zip",
+            FileName = Path.GetFileName(suggestedPath),
+            InitialDirectory = Path.GetDirectoryName(suggestedPath)
+        };
+
+        return dialog.ShowDialog(this) == DialogResult.OK ? dialog.FileName : null;
+    }
+
+    public string? PickRestorePath()
+    {
+        using OpenFileDialog dialog = new()
+        {
+            Title = "Restore Backup",
+            Filter = "Backup Archive (*.zip)|*.zip|All Files (*.*)|*.*",
+            CheckFileExists = true,
+            Multiselect = false
+        };
+
+        return dialog.ShowDialog(this) == DialogResult.OK ? dialog.FileName : null;
+    }
+
     public void RequestClose() => Close();
 
     protected override void WndProc(ref Message m)
@@ -169,6 +200,8 @@ public sealed class MainDashboardView : Form, IMainDashboardView
         _refreshButton.Click += (_, _) => RefreshRequested?.Invoke(this, EventArgs.Empty);
         _settingsButton.Click += (_, _) => SettingsRequested?.Invoke(this, EventArgs.Empty);
         _logsButton.Click += (_, _) => LogsRequested?.Invoke(this, EventArgs.Empty);
+        _backupButton.Click += (_, _) => BackupRequested?.Invoke(this, EventArgs.Empty);
+        _restoreButton.Click += (_, _) => RestoreRequested?.Invoke(this, EventArgs.Empty);
     }
 
     private void UpdateSelectionButtons()
@@ -238,7 +271,7 @@ public sealed class MainDashboardView : Form, IMainDashboardView
         panel.Margin = new Padding(0, 0, 0, 12);
         panel.Padding = new Padding(20, 16, 20, 14);
         var flow = new FlowLayoutPanel { Dock = DockStyle.Fill, AutoSize = true, WrapContents = true, Margin = new Padding(0) };
-        flow.Controls.AddRange([_addButton, _scanButton, _editButton, _deleteButton, _startButton, _rebootButton, _shutdownButton, _refreshButton, _settingsButton, _logsButton]);
+        flow.Controls.AddRange([_addButton, _scanButton, _editButton, _deleteButton, _startButton, _rebootButton, _shutdownButton, _refreshButton, _settingsButton, _logsButton, _backupButton, _restoreButton]);
         panel.Controls.Add(flow);
         return panel;
     }

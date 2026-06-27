@@ -15,6 +15,8 @@ public interface IMainDashboardView
     event EventHandler RefreshRequested;
     event EventHandler SettingsRequested;
     event EventHandler LogsRequested;
+    event EventHandler BackupRequested;
+    event EventHandler RestoreRequested;
     event FormClosingEventHandler ViewClosing;
 
     Func<WindowsShutdownDecision>? WindowsShutdownHandler { get; set; }
@@ -38,6 +40,10 @@ public interface IMainDashboardView
     void ShowError(string message, string title);
 
     bool Confirm(string message, string title);
+
+    string? PickBackupPath(string suggestedPath);
+
+    string? PickRestorePath();
 
     void RequestClose();
 }

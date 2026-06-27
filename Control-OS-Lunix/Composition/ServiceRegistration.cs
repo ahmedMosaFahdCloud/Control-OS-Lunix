@@ -15,6 +15,7 @@ public static class ServiceRegistration
         services.AddSingleton<ICredentialProtector, CredentialProtector>();
         services.AddSingleton<IDeviceValidator, DeviceValidatorService>();
         services.AddSingleton<IConfigurationStore, JsonConfigurationStore>();
+        services.AddSingleton<IBackupRestoreService, BackupRestoreService>();
         services.AddSingleton<ILogService, LogService>();
         services.AddSingleton<IDevicePowerService, DevicePowerService>();
         services.AddSingleton<IControllerOrchestrator, ControllerOrchestrator>();
