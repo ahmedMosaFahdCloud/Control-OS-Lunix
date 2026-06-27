@@ -28,7 +28,8 @@ public sealed class MainDashboardView : Form, IMainDashboardView
     {
         Text = "LanPower Manager";
         StartPosition = FormStartPosition.CenterScreen;
-        BackColor = Color.FromArgb(243, 246, 249);
+        BackColor = ModernUi.AppBackground;
+        Font = ModernUi.BodyFont();
         Width = 1420;
         Height = 820;
         MinimumSize = new Size(1160, 720);
@@ -136,7 +137,7 @@ public sealed class MainDashboardView : Form, IMainDashboardView
             Dock = DockStyle.Fill,
             RowCount = 5,
             ColumnCount = 1,
-            Padding = new Padding(20),
+            Padding = new Padding(24),
             BackColor = BackColor
         };
         root.RowStyles.Add(new RowStyle(SizeType.AutoSize));
@@ -184,20 +185,34 @@ public sealed class MainDashboardView : Form, IMainDashboardView
     {
         var panel = CreateCardPanel();
         panel.Margin = new Padding(0, 0, 0, 14);
-        panel.Padding = new Padding(22);
+        panel.Padding = new Padding(26);
+
+        var ribbon = new Label
+        {
+            Text = "CONTROL CENTER",
+            AutoSize = true,
+            Font = new Font("Segoe UI Semibold", 8.5f, FontStyle.Bold),
+            ForeColor = Color.White,
+            BackColor = ModernUi.Primary,
+            Padding = new Padding(10, 5, 10, 5),
+            Margin = new Padding(0, 0, 0, 14)
+        };
+
+        panel.Controls.Add(ribbon);
         panel.Controls.Add(new Label
         {
             Text = "LanPower Manager",
             AutoSize = true,
-            Font = new Font("Segoe UI Semibold", 20F, FontStyle.Bold),
-            ForeColor = Color.FromArgb(22, 36, 57)
+            Font = ModernUi.TitleFont(22f),
+            ForeColor = ModernUi.TextStrong
         });
         panel.Controls.Add(new Label
         {
             Text = "Professional desktop control for Wake on LAN, Linux power commands, device discovery, and controller automation.",
             AutoSize = true,
-            MaximumSize = new Size(980, 0),
-            ForeColor = Color.FromArgb(91, 102, 122),
+            MaximumSize = new Size(1020, 0),
+            Font = ModernUi.BodyFont(10f),
+            ForeColor = ModernUi.TextMuted,
             Margin = new Padding(0, 10, 0, 0)
         });
         return panel;
@@ -221,7 +236,7 @@ public sealed class MainDashboardView : Form, IMainDashboardView
     {
         var panel = CreateCardPanel();
         panel.Margin = new Padding(0, 0, 0, 12);
-        panel.Padding = new Padding(18, 14, 18, 14);
+        panel.Padding = new Padding(20, 16, 20, 14);
         var flow = new FlowLayoutPanel { Dock = DockStyle.Fill, AutoSize = true, WrapContents = true, Margin = new Padding(0) };
         flow.Controls.AddRange([_addButton, _scanButton, _editButton, _deleteButton, _startButton, _rebootButton, _shutdownButton, _refreshButton, _settingsButton, _logsButton]);
         panel.Controls.Add(flow);
@@ -232,35 +247,28 @@ public sealed class MainDashboardView : Form, IMainDashboardView
     {
         var panel = CreateCardPanel();
         panel.Margin = new Padding(0, 0, 0, 12);
-        panel.Padding = new Padding(18, 12, 18, 12);
+        panel.Padding = new Padding(18, 14, 18, 14);
+        panel.BackColor = Color.FromArgb(245, 248, 255);
         panel.Controls.Add(_statusBanner);
         _statusBanner.Text = "Ready. Select a device or scan the network to begin.";
+        _statusBanner.Font = new Font("Segoe UI Semibold", 9F, FontStyle.Bold);
         return panel;
     }
 
     private Control BuildGridCard()
     {
         var panel = CreateCardPanel();
-        panel.Padding = new Padding(10);
+        panel.Padding = new Padding(12);
         _deviceGrid.Dock = DockStyle.Fill;
         _deviceGrid.AllowUserToAddRows = false;
         _deviceGrid.AllowUserToDeleteRows = false;
         _deviceGrid.AllowUserToResizeRows = false;
         _deviceGrid.AutoSizeColumnsMode = DataGridViewAutoSizeColumnsMode.Fill;
-        _deviceGrid.BackgroundColor = Color.White;
-        _deviceGrid.BorderStyle = BorderStyle.None;
         _deviceGrid.MultiSelect = false;
         _deviceGrid.ReadOnly = true;
         _deviceGrid.RowHeadersVisible = false;
         _deviceGrid.SelectionMode = DataGridViewSelectionMode.FullRowSelect;
-        _deviceGrid.ColumnHeadersDefaultCellStyle.Font = new Font("Segoe UI Semibold", 9F, FontStyle.Bold);
-        _deviceGrid.EnableHeadersVisualStyles = false;
-        _deviceGrid.ColumnHeadersDefaultCellStyle.BackColor = Color.FromArgb(240, 244, 248);
-        _deviceGrid.ColumnHeadersDefaultCellStyle.ForeColor = Color.FromArgb(50, 62, 82);
-        _deviceGrid.DefaultCellStyle.SelectionBackColor = Color.FromArgb(224, 236, 255);
-        _deviceGrid.DefaultCellStyle.SelectionForeColor = Color.FromArgb(36, 49, 66);
-        _deviceGrid.RowsDefaultCellStyle.BackColor = Color.White;
-        _deviceGrid.AlternatingRowsDefaultCellStyle.BackColor = Color.FromArgb(249, 250, 251);
+        ModernUi.StyleGrid(_deviceGrid);
         _deviceGrid.Columns.Add(CreateTextColumn("Name", "Name"));
         _deviceGrid.Columns.Add(CreateTextColumn("IpAddress", "IP Address"));
         _deviceGrid.Columns.Add(CreateTextColumn("Status", "Status"));
@@ -272,14 +280,14 @@ public sealed class MainDashboardView : Form, IMainDashboardView
         return panel;
     }
 
-    private static Panel CreateCardPanel() => new() { Dock = DockStyle.Fill, BackColor = Color.White };
+    private static Panel CreateCardPanel() => ModernUi.CreateCard();
 
     private static Panel CreateSummaryCard(string title, Label valueLabel, Color accentColor)
     {
-        var card = new Panel { Dock = DockStyle.Fill, BackColor = Color.White, Margin = new Padding(0, 0, 14, 0), Padding = new Padding(18) };
+        var card = new Panel { Dock = DockStyle.Fill, BackColor = ModernUi.CardBackground, Margin = new Padding(0, 0, 14, 0), Padding = new Padding(18) };
         var accent = new Panel { Dock = DockStyle.Left, Width = 4, BackColor = accentColor };
         var content = new FlowLayoutPanel { Dock = DockStyle.Fill, AutoSize = true, FlowDirection = FlowDirection.TopDown, WrapContents = false, Margin = new Padding(12, 0, 0, 0) };
-        content.Controls.Add(new Label { Text = title, AutoSize = true, ForeColor = Color.FromArgb(91, 102, 122) });
+        content.Controls.Add(new Label { Text = title, AutoSize = true, ForeColor = ModernUi.TextMuted, Font = new Font("Segoe UI Semibold", 9F, FontStyle.Bold) });
         content.Controls.Add(valueLabel);
         card.Controls.Add(content);
         card.Controls.Add(accent);
@@ -289,28 +297,12 @@ public sealed class MainDashboardView : Form, IMainDashboardView
     private static Label CreateSummaryValueLabel() => new()
     {
         AutoSize = true,
-        Font = new Font("Segoe UI Semibold", 14F, FontStyle.Bold),
+        Font = ModernUi.TitleFont(14f),
         Margin = new Padding(0, 8, 0, 0),
-        ForeColor = Color.FromArgb(22, 36, 57)
+        ForeColor = ModernUi.TextStrong
     };
 
-    private static Button CreateActionButton(string text)
-    {
-        var button = new Button
-        {
-            Text = text,
-            AutoSize = true,
-            AutoSizeMode = AutoSizeMode.GrowAndShrink,
-            BackColor = Color.FromArgb(244, 247, 252),
-            FlatStyle = FlatStyle.Flat,
-            Margin = new Padding(0, 0, 10, 8),
-            Padding = new Padding(14, 8, 14, 8)
-        };
-        button.FlatAppearance.BorderColor = Color.FromArgb(221, 228, 237);
-        button.FlatAppearance.MouseDownBackColor = Color.FromArgb(225, 235, 250);
-        button.FlatAppearance.MouseOverBackColor = Color.FromArgb(234, 241, 251);
-        return button;
-    }
+    private static Button CreateActionButton(string text) => ModernUi.CreateButton(text, text is "Add Device" or "Scan Network");
 
     private static DataGridViewTextBoxColumn CreateTextColumn(string name, string headerText) =>
         new() { Name = name, HeaderText = headerText, SortMode = DataGridViewColumnSortMode.NotSortable };

@@ -29,8 +29,10 @@ public sealed class DeviceDialogView : Form, IDeviceDialogView
         FormBorderStyle = FormBorderStyle.FixedDialog;
         MaximizeBox = false;
         MinimizeBox = false;
-        Width = 560;
-        Height = 700;
+        BackColor = ModernUi.AppBackground;
+        Font = ModernUi.BodyFont();
+        Width = 720;
+        Height = 820;
         _operatingSystemComboBox.DataSource = Enum.GetValues<DeviceOperatingSystemType>();
         BuildLayout();
     }
@@ -115,44 +117,97 @@ public sealed class DeviceDialogView : Form, IDeviceDialogView
 
     private void BuildLayout()
     {
-        var container = new TableLayoutPanel
+        var root = new TableLayoutPanel
         {
             Dock = DockStyle.Fill,
-            Padding = new Padding(16),
-            ColumnCount = 2,
-            AutoScroll = true
+            Padding = new Padding(20),
+            BackColor = BackColor,
+            RowCount = 3,
+            ColumnCount = 1
         };
-        container.ColumnStyles.Add(new ColumnStyle(SizeType.Absolute, 160));
-        container.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 100));
+        root.RowStyles.Add(new RowStyle(SizeType.AutoSize));
+        root.RowStyles.Add(new RowStyle(SizeType.Percent, 100));
+        root.RowStyles.Add(new RowStyle(SizeType.AutoSize));
 
-        AddRow(container, "Device Name", _nameTextBox);
-        AddRow(container, "IP Address", _ipAddressTextBox);
-        AddRow(container, "MAC Address", _macAddressTextBox);
-        AddRow(container, "Broadcast Address", _broadcastAddressTextBox);
-        AddRow(container, "WOL Port", _wolPortNumeric);
-        AddRow(container, "SSH Host", _sshHostTextBox);
-        AddRow(container, "SSH Port", _sshPortNumeric);
-        AddRow(container, "SSH Username", _sshUsernameTextBox);
-        AddRow(container, "SSH Password", _sshPasswordTextBox);
-        AddRow(container, "Operating System", _operatingSystemComboBox);
-        AddRow(container, "Timeout Seconds", _timeoutSecondsNumeric);
-        AddRow(container, "Retry Count", _retryCountNumeric);
-        AddRow(container, "Description", _descriptionTextBox);
-        container.Controls.Add(_autoStartCheckBox, 1, container.RowCount++);
-        container.Controls.Add(_autoShutdownCheckBox, 1, container.RowCount++);
-        container.Controls.Add(_manualControlCheckBox, 1, container.RowCount++);
-        container.Controls.Add(_activeCheckBox, 1, container.RowCount++);
+        var headerCard = ModernUi.CreateCard(22);
+        headerCard.Margin = new Padding(0, 0, 0, 14);
+        headerCard.Controls.Add(new Label
+        {
+            Text = "Device Configuration",
+            AutoSize = true,
+            Font = ModernUi.TitleFont(18f),
+            ForeColor = ModernUi.TextStrong
+        });
+        headerCard.Controls.Add(new Label
+        {
+            Text = "Configure networking, Wake on LAN, SSH access, and automation flags for this device.",
+            AutoSize = true,
+            MaximumSize = new Size(620, 0),
+            Font = ModernUi.BodyFont(),
+            ForeColor = ModernUi.TextMuted,
+            Margin = new Padding(0, 10, 0, 0)
+        });
+
+        var scrollPanel = new Panel
+        {
+            Dock = DockStyle.Fill,
+            AutoScroll = true,
+            BackColor = BackColor
+        };
+
+        var content = new FlowLayoutPanel
+        {
+            Dock = DockStyle.Top,
+            FlowDirection = FlowDirection.TopDown,
+            WrapContents = false,
+            AutoSize = true
+        };
+
+        var identityCard = CreateSectionCard("Identity", out TableLayoutPanel identityGrid);
+        AddRow(identityGrid, "Device Name", _nameTextBox);
+        AddRow(identityGrid, "IP Address", _ipAddressTextBox);
+        AddRow(identityGrid, "MAC Address", _macAddressTextBox);
+        AddRow(identityGrid, "Description", _descriptionTextBox);
+
+        var networkCard = CreateSectionCard("Networking", out TableLayoutPanel networkGrid);
+        AddRow(networkGrid, "Broadcast Address", _broadcastAddressTextBox);
+        AddRow(networkGrid, "WOL Port", _wolPortNumeric);
+        AddRow(networkGrid, "Operating System", _operatingSystemComboBox);
+        AddRow(networkGrid, "Timeout Seconds", _timeoutSecondsNumeric);
+        AddRow(networkGrid, "Retry Count", _retryCountNumeric);
+
+        var sshCard = CreateSectionCard("SSH Access", out TableLayoutPanel sshGrid);
+        AddRow(sshGrid, "SSH Host", _sshHostTextBox);
+        AddRow(sshGrid, "SSH Port", _sshPortNumeric);
+        AddRow(sshGrid, "SSH Username", _sshUsernameTextBox);
+        AddRow(sshGrid, "SSH Password", _sshPasswordTextBox);
+
+        var behaviorCard = ModernUi.CreateCard(18);
+        behaviorCard.Margin = new Padding(0, 0, 0, 14);
+        behaviorCard.Controls.Add(ModernUi.CreateSectionLabel("Behavior"));
+        foreach (CheckBox checkBox in new[] { _autoStartCheckBox, _autoShutdownCheckBox, _manualControlCheckBox, _activeCheckBox })
+        {
+            ModernUi.StyleCheckBox(checkBox);
+            behaviorCard.Controls.Add(checkBox);
+        }
+
+        content.Controls.Add(identityCard);
+        content.Controls.Add(networkCard);
+        content.Controls.Add(sshCard);
+        content.Controls.Add(behaviorCard);
+        scrollPanel.Controls.Add(content);
 
         var buttonsPanel = new FlowLayoutPanel
         {
             Dock = DockStyle.Bottom,
             FlowDirection = FlowDirection.RightToLeft,
-            Height = 48,
-            Padding = new Padding(16, 8, 16, 8)
+            Height = 58,
+            Padding = new Padding(0, 8, 0, 0),
+            BackColor = BackColor
         };
 
-        var saveButton = new Button { Text = "Save", AutoSize = true };
-        var cancelButton = new Button { Text = "Cancel", AutoSize = true };
+        var saveButton = ModernUi.CreateButton("Save Device", primary: true);
+        var cancelButton = ModernUi.CreateButton("Cancel");
         saveButton.Click += (_, _) => SaveRequested?.Invoke(this, EventArgs.Empty);
         cancelButton.Click += (_, _) => CancelRequested?.Invoke(this, EventArgs.Empty);
         buttonsPanel.Controls.Add(saveButton);
@@ -160,20 +215,34 @@ public sealed class DeviceDialogView : Form, IDeviceDialogView
         AcceptButton = saveButton;
         CancelButton = cancelButton;
 
-        Controls.Add(container);
-        Controls.Add(buttonsPanel);
+        root.Controls.Add(headerCard, 0, 0);
+        root.Controls.Add(scrollPanel, 0, 1);
+        root.Controls.Add(buttonsPanel, 0, 2);
+        Controls.Add(root);
+    }
+
+    private static Panel CreateSectionCard(string title, out TableLayoutPanel grid)
+    {
+        var card = ModernUi.CreateCard(18);
+        card.Margin = new Padding(0, 0, 0, 14);
+        card.Controls.Add(ModernUi.CreateSectionLabel(title));
+        grid = new TableLayoutPanel
+        {
+            Dock = DockStyle.Top,
+            AutoSize = true,
+            ColumnCount = 2
+        };
+        grid.ColumnStyles.Add(new ColumnStyle(SizeType.Absolute, 180));
+        grid.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 100));
+        card.Controls.Add(grid);
+        return card;
     }
 
     private static void AddRow(TableLayoutPanel table, string labelText, Control control)
     {
         table.RowStyles.Add(new RowStyle(SizeType.AutoSize));
-        table.Controls.Add(new Label
-        {
-            Text = labelText,
-            AutoSize = true,
-            Anchor = AnchorStyles.Left,
-            Padding = new Padding(0, 8, 8, 0)
-        }, 0, table.RowCount);
+        table.Controls.Add(ModernUi.CreateFieldLabel(labelText), 0, table.RowCount);
+        ModernUi.StyleInput(control);
         control.Dock = DockStyle.Top;
         table.Controls.Add(control, 1, table.RowCount);
         table.RowCount++;

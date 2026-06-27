@@ -10,6 +10,9 @@ namespace Control_OS_Lunix.Backend.Services;
 
 public sealed class DevicePowerService : IDevicePowerService
 {
+    private const string InteractiveAuthenticationMessage = "interactive authentication is required";
+    private const string PasswordRequiredMessage = "a password is required";
+
     public async Task<Result<DevicePowerReport>> GetReportAsync(
         DevicePowerConfig device,
         int pingTimeoutSeconds,
@@ -86,24 +89,78 @@ public sealed class DevicePowerService : IDevicePowerService
                     return Result.Failure("device.ssh.connect.failed", "SSH connection failed.");
                 }
 
-                using SshCommand sshCommand = sshClient.CreateCommand(command);
-                string result = sshCommand.Execute();
-
-                if (sshCommand.ExitStatus != 0)
+                SshCommandResult commandResult = ExecuteCommand(sshClient, command);
+                if (commandResult.ExitStatus == 0)
                 {
-                    return Result.Failure(
-                        "device.ssh.command.failed",
-                        $"SSH command failed. Command: {command}. Error: {sshCommand.Error}. Result: {result}");
+                    sshClient.Disconnect();
+                    return Result.Success();
                 }
 
-                sshClient.Disconnect();
-                return Result.Success();
+                if (CanRetryWithSudoPassword(device, command, commandResult))
+                {
+                    string fallbackCommand = BuildSudoPasswordCommand(device.SshPassword, command);
+                    SshCommandResult fallbackResult = ExecuteCommand(sshClient, fallbackCommand);
+
+                    if (fallbackResult.ExitStatus == 0)
+                    {
+                        sshClient.Disconnect();
+                        return Result.Success();
+                    }
+
+                    return Result.Failure(
+                        "device.ssh.command.failed",
+                        $"SSH command failed after sudo password fallback. Command: {command}. Error: {fallbackResult.Error}. Result: {fallbackResult.Output}");
+                }
+
+                return Result.Failure(
+                    "device.ssh.command.failed",
+                    $"SSH command failed. Command: {command}. Error: {commandResult.Error}. Result: {commandResult.Output}");
             }
             catch (Exception exception)
             {
                 return Result.Failure("device.ssh.failed", exception.Message);
             }
         }, cancellationToken);
+    }
+
+    private static bool CanRetryWithSudoPassword(DevicePowerConfig device, string command, SshCommandResult commandResult)
+    {
+        if (string.IsNullOrWhiteSpace(device.SshPassword))
+        {
+            return false;
+        }
+
+        if (!command.Contains("sudo -n ", StringComparison.Ordinal))
+        {
+            return false;
+        }
+
+        string combined = $"{commandResult.Error} {commandResult.Output}".ToLowerInvariant();
+        return combined.Contains(InteractiveAuthenticationMessage, StringComparison.Ordinal) ||
+               combined.Contains(PasswordRequiredMessage, StringComparison.Ordinal);
+    }
+
+    private static string BuildSudoPasswordCommand(string password, string command)
+    {
+        string privilegedCommand = command.Replace("sudo -n ", string.Empty, StringComparison.Ordinal);
+        string escapedPassword = EscapeSingleQuotedShellValue(password);
+        return $"printf '%s\\n' '{escapedPassword}' | sudo -S -p '' {privilegedCommand}";
+    }
+
+    private static string EscapeSingleQuotedShellValue(string value)
+    {
+        return value.Replace("'", "'\"'\"'", StringComparison.Ordinal);
+    }
+
+    private static SshCommandResult ExecuteCommand(SshClient sshClient, string commandText)
+    {
+        using SshCommand sshCommand = sshClient.CreateCommand(commandText);
+        string output = sshCommand.Execute();
+
+        return new SshCommandResult(
+            sshCommand.ExitStatus ?? -1,
+            sshCommand.Error ?? string.Empty,
+            output ?? string.Empty);
     }
 
     private static byte[] BuildMagicPacket(string macAddress)
@@ -133,4 +190,6 @@ public sealed class DevicePowerService : IDevicePowerService
 
         return packet;
     }
+
+    private sealed record SshCommandResult(int ExitStatus, string Error, string Output);
 }

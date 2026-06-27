@@ -23,8 +23,10 @@ public sealed class SettingsView : Form, ISettingsView
         FormBorderStyle = FormBorderStyle.FixedDialog;
         MaximizeBox = false;
         MinimizeBox = false;
-        Width = 520;
-        Height = 460;
+        BackColor = ModernUi.AppBackground;
+        Font = ModernUi.BodyFont();
+        Width = 680;
+        Height = 620;
         BuildLayout();
     }
 
@@ -73,53 +75,90 @@ public sealed class SettingsView : Form, ISettingsView
 
     private void BuildLayout()
     {
-        var container = new TableLayoutPanel
+        var root = new TableLayoutPanel
         {
             Dock = DockStyle.Fill,
-            Padding = new Padding(16),
+            Padding = new Padding(20),
+            BackColor = BackColor,
+            RowCount = 3,
+            ColumnCount = 1
+        };
+        root.RowStyles.Add(new RowStyle(SizeType.AutoSize));
+        root.RowStyles.Add(new RowStyle(SizeType.Percent, 100));
+        root.RowStyles.Add(new RowStyle(SizeType.AutoSize));
+
+        var headerCard = ModernUi.CreateCard(22);
+        headerCard.Margin = new Padding(0, 0, 0, 14);
+        headerCard.Controls.Add(new Label
+        {
+            Text = "System Settings",
+            AutoSize = true,
+            Font = ModernUi.TitleFont(18f),
+            ForeColor = ModernUi.TextStrong
+        });
+        headerCard.Controls.Add(new Label
+        {
+            Text = "Tune automation, timeouts, logging, and controller behavior for a smoother operations workflow.",
+            AutoSize = true,
+            MaximumSize = new Size(560, 0),
+            ForeColor = ModernUi.TextMuted,
+            Margin = new Padding(0, 10, 0, 0)
+        });
+
+        var contentCard = ModernUi.CreateCard(18);
+        var content = new TableLayoutPanel
+        {
+            Dock = DockStyle.Top,
+            AutoSize = true,
             ColumnCount = 2
         };
-        container.ColumnStyles.Add(new ColumnStyle(SizeType.Absolute, 220));
-        container.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 100));
+        content.ColumnStyles.Add(new ColumnStyle(SizeType.Absolute, 230));
+        content.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 100));
 
-        AddRow(container, "Delay Between Commands (ms)", _delayNumeric);
-        AddRow(container, "Ping Timeout (sec)", _pingTimeoutNumeric);
-        AddRow(container, "SSH Timeout (sec)", _sshTimeoutNumeric);
-        AddRow(container, "Retry Count", _retryCountNumeric);
-        AddRow(container, "Default WOL Port", _defaultWolPortNumeric);
-        AddRow(container, "Default Broadcast", _defaultBroadcastAddressTextBox);
-        AddRow(container, "Log Retention Days", _retentionDaysNumeric);
-        container.Controls.Add(_autoStartCheckBox, 1, container.RowCount++);
-        container.Controls.Add(_autoShutdownCheckBox, 1, container.RowCount++);
-        container.Controls.Add(_enableLogsCheckBox, 1, container.RowCount++);
-        container.Controls.Add(_confirmManualShutdownCheckBox, 1, container.RowCount++);
+        AddRow(content, "Delay Between Commands (ms)", _delayNumeric);
+        AddRow(content, "Ping Timeout (sec)", _pingTimeoutNumeric);
+        AddRow(content, "SSH Timeout (sec)", _sshTimeoutNumeric);
+        AddRow(content, "Retry Count", _retryCountNumeric);
+        AddRow(content, "Default WOL Port", _defaultWolPortNumeric);
+        AddRow(content, "Default Broadcast", _defaultBroadcastAddressTextBox);
+        AddRow(content, "Log Retention Days", _retentionDaysNumeric);
+
+        foreach (CheckBox checkBox in new[] { _autoStartCheckBox, _autoShutdownCheckBox, _enableLogsCheckBox, _confirmManualShutdownCheckBox })
+        {
+            ModernUi.StyleCheckBox(checkBox);
+            content.Controls.Add(new Label { AutoSize = true }, 0, content.RowCount);
+            content.Controls.Add(checkBox, 1, content.RowCount);
+            content.RowCount++;
+        }
+
+        contentCard.Controls.Add(ModernUi.CreateSectionLabel("Automation And Reliability"));
+        contentCard.Controls.Add(content);
 
         var buttonsPanel = new FlowLayoutPanel
         {
             Dock = DockStyle.Bottom,
             FlowDirection = FlowDirection.RightToLeft,
-            Height = 48,
-            Padding = new Padding(16, 8, 16, 8)
+            Height = 58,
+            Padding = new Padding(0, 8, 0, 0),
+            BackColor = BackColor
         };
 
-        var saveButton = new Button { Text = "Save", AutoSize = true };
-        var cancelButton = new Button { Text = "Cancel", AutoSize = true };
+        var saveButton = ModernUi.CreateButton("Save Settings", primary: true);
+        var cancelButton = ModernUi.CreateButton("Cancel");
         saveButton.Click += (_, _) => SaveRequested?.Invoke(this, EventArgs.Empty);
         cancelButton.Click += (_, _) => CancelRequested?.Invoke(this, EventArgs.Empty);
         buttonsPanel.Controls.Add(saveButton);
         buttonsPanel.Controls.Add(cancelButton);
-        Controls.Add(container);
-        Controls.Add(buttonsPanel);
+        root.Controls.Add(headerCard, 0, 0);
+        root.Controls.Add(contentCard, 0, 1);
+        root.Controls.Add(buttonsPanel, 0, 2);
+        Controls.Add(root);
     }
 
     private static void AddRow(TableLayoutPanel table, string labelText, Control control)
     {
-        table.Controls.Add(new Label
-        {
-            Text = labelText,
-            AutoSize = true,
-            Padding = new Padding(0, 8, 8, 0)
-        }, 0, table.RowCount);
+        table.Controls.Add(ModernUi.CreateFieldLabel(labelText), 0, table.RowCount);
+        ModernUi.StyleInput(control);
         control.Dock = DockStyle.Top;
         table.Controls.Add(control, 1, table.RowCount);
         table.RowCount++;

@@ -19,10 +19,11 @@ public sealed class NetworkScannerView : Form, INetworkScannerView
     {
         Text = "Network Scanner";
         StartPosition = FormStartPosition.CenterParent;
+        BackColor = ModernUi.AppBackground;
+        Font = ModernUi.BodyFont();
         Width = 980;
         Height = 680;
         MinimumSize = new Size(860, 580);
-        BackColor = Color.FromArgb(245, 247, 250);
         BuildLayout();
     }
 
@@ -88,7 +89,7 @@ public sealed class NetworkScannerView : Form, INetworkScannerView
             Dock = DockStyle.Fill,
             RowCount = 3,
             ColumnCount = 1,
-            Padding = new Padding(18),
+            Padding = new Padding(20),
             BackColor = BackColor
         };
         root.RowStyles.Add(new RowStyle(SizeType.AutoSize));
@@ -106,8 +107,18 @@ public sealed class NetworkScannerView : Form, INetworkScannerView
         card.Margin = new Padding(0, 0, 0, 14);
         card.Controls.Add(new Label
         {
+            Text = "NETWORK DISCOVERY",
+            AutoSize = true,
+            Font = new Font("Segoe UI Semibold", 8.5f, FontStyle.Bold),
+            ForeColor = Color.White,
+            BackColor = ModernUi.Primary,
+            Padding = new Padding(10, 5, 10, 5),
+            Margin = new Padding(0, 0, 0, 14)
+        });
+        card.Controls.Add(new Label
+        {
             Text = "Discover Devices On The Network",
-            Font = new Font(SystemFonts.DefaultFont.FontFamily, 16, FontStyle.Bold),
+            Font = ModernUi.TitleFont(18f),
             AutoSize = true
         });
         card.Controls.Add(new Label
@@ -115,7 +126,7 @@ public sealed class NetworkScannerView : Form, INetworkScannerView
             Text = "Scan your LAN range, review reachable hosts, and create device records without retyping IP addresses.",
             AutoSize = true,
             MaximumSize = new Size(900, 0),
-            ForeColor = Color.DimGray,
+            ForeColor = ModernUi.TextMuted,
             Margin = new Padding(0, 8, 0, 0)
         });
         return card;
@@ -137,7 +148,13 @@ public sealed class NetworkScannerView : Form, INetworkScannerView
         AddField(layout, "Concurrency", _concurrencyNumeric, 4);
 
         var actionsPanel = new FlowLayoutPanel { Dock = DockStyle.Top, AutoSize = true, Margin = new Padding(0, 16, 0, 0) };
-        var cancelButton = new Button { Text = "Cancel", AutoSize = true };
+        var cancelButton = ModernUi.CreateButton("Cancel");
+        _scanButton.BackColor = ModernUi.Primary;
+        _scanButton.ForeColor = Color.White;
+        _scanButton.FlatAppearance.BorderColor = ModernUi.Primary;
+        _useResultButton.BackColor = Color.FromArgb(234, 245, 238);
+        _useResultButton.ForeColor = ModernUi.Success;
+        _useResultButton.FlatAppearance.BorderColor = Color.FromArgb(190, 230, 205);
         _scanButton.Click += (_, _) => ScanRequested?.Invoke(this, EventArgs.Empty);
         _useResultButton.Click += (_, _) => UseSelectionRequested?.Invoke(this, EventArgs.Empty);
         cancelButton.Click += (_, _) => CancelRequested?.Invoke(this, EventArgs.Empty);
@@ -152,6 +169,7 @@ public sealed class NetworkScannerView : Form, INetworkScannerView
         card.Controls.Add(_statusLabel);
         card.Controls.Add(_progressBar);
         _statusLabel.Margin = new Padding(0, 12, 0, 0);
+        _statusLabel.Font = new Font("Segoe UI Semibold", 9F, FontStyle.Bold);
         _progressBar.Margin = new Padding(0, 10, 0, 0);
         return card;
     }
@@ -164,12 +182,11 @@ public sealed class NetworkScannerView : Form, INetworkScannerView
         _resultsGrid.AllowUserToDeleteRows = false;
         _resultsGrid.AllowUserToResizeRows = false;
         _resultsGrid.AutoSizeColumnsMode = DataGridViewAutoSizeColumnsMode.Fill;
-        _resultsGrid.BackgroundColor = Color.White;
         _resultsGrid.ReadOnly = true;
         _resultsGrid.MultiSelect = false;
         _resultsGrid.RowHeadersVisible = false;
         _resultsGrid.SelectionMode = DataGridViewSelectionMode.FullRowSelect;
-        _resultsGrid.BorderStyle = BorderStyle.None;
+        ModernUi.StyleGrid(_resultsGrid);
         _resultsGrid.Columns.Add(new DataGridViewTextBoxColumn { Name = "IpAddress", HeaderText = "IP Address", SortMode = DataGridViewColumnSortMode.NotSortable });
         _resultsGrid.Columns.Add(new DataGridViewTextBoxColumn { Name = "HostName", HeaderText = "Host Name", SortMode = DataGridViewColumnSortMode.NotSortable });
         _resultsGrid.Columns.Add(new DataGridViewTextBoxColumn { Name = "MacAddress", HeaderText = "MAC Address", SortMode = DataGridViewColumnSortMode.NotSortable });
@@ -187,7 +204,7 @@ public sealed class NetworkScannerView : Form, INetworkScannerView
             AutoSize = true,
             FlowDirection = FlowDirection.TopDown,
             WrapContents = false,
-            Padding = new Padding(18),
+            Padding = new Padding(20),
             BackColor = Color.White
         };
     }
@@ -201,7 +218,8 @@ public sealed class NetworkScannerView : Form, INetworkScannerView
             layout.RowStyles.Add(new RowStyle(SizeType.AutoSize));
         }
 
-        layout.Controls.Add(new Label { Text = labelText, AutoSize = true, Margin = new Padding(0, 10, 8, 0) }, columnOffset, rowIndex);
+        layout.Controls.Add(ModernUi.CreateFieldLabel(labelText), columnOffset, rowIndex);
+        ModernUi.StyleInput(control);
         control.Dock = DockStyle.Top;
         control.Margin = new Padding(0, 6, 0, 0);
         layout.Controls.Add(control, columnOffset + 1, rowIndex);
