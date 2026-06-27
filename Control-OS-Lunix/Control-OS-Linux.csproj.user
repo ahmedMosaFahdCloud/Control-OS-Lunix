@@ -4,10 +4,13 @@
     <Compile Update="DeviceDialogForm.cs">
       <SubType>Form</SubType>
     </Compile>
-    <Compile Update="Form1.cs">
+    <Compile Update="MainDashboardForm.cs">
       <SubType>Form</SubType>
     </Compile>
     <Compile Update="LogsForm.cs">
+      <SubType>Form</SubType>
+    </Compile>
+    <Compile Update="NetworkScannerForm.cs">
       <SubType>Form</SubType>
     </Compile>
     <Compile Update="SettingsDialogForm.cs">

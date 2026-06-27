@@ -20,3 +20,5 @@ E:\desktop\Control-OS-Lunix\Control-OS-Lunix\obj\Debug\net8.0-windows\refint\Con
 E:\desktop\Control-OS-Lunix\Control-OS-Lunix\obj\Debug\net8.0-windows\Control-OS-Linux.pdb
 E:\desktop\Control-OS-Lunix\Control-OS-Lunix\obj\Debug\net8.0-windows\Control-OS-Linux.genruntimeconfig.cache
 E:\desktop\Control-OS-Lunix\Control-OS-Lunix\obj\Debug\net8.0-windows\ref\Control-OS-Linux.dll
+E:\desktop\Control-OS-Lunix\Control-OS-Lunix\obj\Debug\net8.0-windows\Control_OS_Lunix.LogsForm.resources
+E:\desktop\Control-OS-Lunix\Control-OS-Lunix\obj\Debug\net8.0-windows\Control-OS-Linux.sourcelink.json

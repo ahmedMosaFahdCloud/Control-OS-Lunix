@@ -4,7 +4,7 @@ using System.Runtime.InteropServices;
 
 namespace Control_OS_Lunix;
 
-public partial class Form1 : Form
+public partial class MainDashboardForm : Form
 {
     private const uint WmQueryEndSession = 0x0011;
     private const uint WmEndSession = 0x0016;
@@ -14,28 +14,31 @@ public partial class Form1 : Form
     private readonly LogService _logService;
     private readonly DevicePowerService _devicePowerService;
     private readonly ControllerOrchestrator _controllerOrchestrator;
+    private readonly NetworkScannerService _networkScannerService;
 
     private readonly Label _totalDevicesValue = CreateSummaryValueLabel();
     private readonly Label _onlineDevicesValue = CreateSummaryValueLabel();
     private readonly Label _activeDevicesValue = CreateSummaryValueLabel();
     private readonly Label _lastActionValue = CreateSummaryValueLabel();
     private readonly DataGridView _deviceGrid = new();
-    private readonly Button _addButton = new() { Text = "Add Device", AutoSize = true };
-    private readonly Button _editButton = new() { Text = "Edit", AutoSize = true };
-    private readonly Button _deleteButton = new() { Text = "Delete", AutoSize = true };
-    private readonly Button _startButton = new() { Text = "Start", AutoSize = true };
-    private readonly Button _rebootButton = new() { Text = "Reboot", AutoSize = true };
-    private readonly Button _shutdownButton = new() { Text = "Shutdown", AutoSize = true };
-    private readonly Button _refreshButton = new() { Text = "Refresh Status", AutoSize = true };
-    private readonly Button _settingsButton = new() { Text = "Settings", AutoSize = true };
-    private readonly Button _logsButton = new() { Text = "View Logs", AutoSize = true };
+    private readonly Button _addButton = CreateActionButton("Add Device");
+    private readonly Button _scanButton = CreateActionButton("Scan Network");
+    private readonly Button _editButton = CreateActionButton("Edit");
+    private readonly Button _deleteButton = CreateActionButton("Delete");
+    private readonly Button _startButton = CreateActionButton("Start");
+    private readonly Button _rebootButton = CreateActionButton("Reboot");
+    private readonly Button _shutdownButton = CreateActionButton("Shutdown");
+    private readonly Button _refreshButton = CreateActionButton("Refresh Status");
+    private readonly Button _settingsButton = CreateActionButton("Settings");
+    private readonly Button _logsButton = CreateActionButton("View Logs");
+    private readonly Label _statusBanner = new() { AutoSize = true, ForeColor = Color.FromArgb(74, 85, 104) };
 
     private AppConfiguration _configuration = new();
     private bool _startupSequenceCompleted;
     private bool _shutdownSequenceInProgress;
     private bool _allowClose;
 
-    public Form1()
+    public MainDashboardForm()
     {
         InitializeComponent();
         SetProcessShutdownParameters(ShutdownPriorityLate, 0);
@@ -45,6 +48,7 @@ public partial class Form1 : Form
         _logService = new LogService(ApplicationPaths.LogFilePath);
         _devicePowerService = new DevicePowerService();
         _controllerOrchestrator = new ControllerOrchestrator(_devicePowerService, _logService);
+        _networkScannerService = new NetworkScannerService();
 
         BuildLayout();
         WireEvents();
@@ -55,48 +59,51 @@ public partial class Form1 : Form
         var root = new TableLayoutPanel
         {
             Dock = DockStyle.Fill,
-            RowCount = 4,
+            RowCount = 5,
             ColumnCount = 1,
-            Padding = new Padding(16)
+            Padding = new Padding(20),
+            BackColor = BackColor
         };
+        root.RowStyles.Add(new RowStyle(SizeType.AutoSize));
         root.RowStyles.Add(new RowStyle(SizeType.AutoSize));
         root.RowStyles.Add(new RowStyle(SizeType.AutoSize));
         root.RowStyles.Add(new RowStyle(SizeType.AutoSize));
         root.RowStyles.Add(new RowStyle(SizeType.Percent, 100));
 
-        root.Controls.Add(BuildHeaderPanel(), 0, 0);
+        root.Controls.Add(BuildHeroPanel(), 0, 0);
         root.Controls.Add(BuildSummaryPanel(), 0, 1);
         root.Controls.Add(BuildToolbarPanel(), 0, 2);
-        root.Controls.Add(BuildGridPanel(), 0, 3);
+        root.Controls.Add(BuildStatusPanel(), 0, 3);
+        root.Controls.Add(BuildGridCard(), 0, 4);
 
         Controls.Add(root);
     }
 
-    private Control BuildHeaderPanel()
+    private Control BuildHeroPanel()
     {
-        var panel = new TableLayoutPanel
+        var panel = CreateCardPanel();
+        panel.Margin = new Padding(0, 0, 0, 14);
+        panel.Padding = new Padding(22);
+
+        var title = new Label
         {
-            Dock = DockStyle.Fill,
-            ColumnCount = 1,
+            Text = "LanPower Manager",
             AutoSize = true,
-            Margin = new Padding(0, 0, 0, 12)
+            Font = new Font("Segoe UI Semibold", 20F, FontStyle.Bold),
+            ForeColor = Color.FromArgb(22, 36, 57)
         };
 
-        panel.Controls.Add(new Label
+        var subtitle = new Label
         {
-            Text = "Network Power Control System",
-            Font = new Font(Font.FontFamily, 18, FontStyle.Bold),
-            AutoSize = true
-        }, 0, 0);
-
-        panel.Controls.Add(new Label
-        {
-            Text = "Manage Wake on LAN, SSH shutdown and reboot, status reporting, and controller startup or shutdown automation.",
-            ForeColor = Color.DimGray,
+            Text = "Professional desktop control for Wake on LAN, Linux power commands, device discovery, and controller automation.",
             AutoSize = true,
-            Margin = new Padding(0, 8, 0, 0)
-        }, 0, 1);
+            MaximumSize = new Size(980, 0),
+            ForeColor = Color.FromArgb(91, 102, 122),
+            Margin = new Padding(0, 10, 0, 0)
+        };
 
+        panel.Controls.Add(title);
+        panel.Controls.Add(subtitle);
         return panel;
     }
 
@@ -107,35 +114,38 @@ public partial class Form1 : Form
             Dock = DockStyle.Fill,
             ColumnCount = 4,
             AutoSize = true,
-            Margin = new Padding(0, 0, 0, 12)
+            Margin = new Padding(0, 0, 0, 14)
         };
-
         panel.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 25));
         panel.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 25));
         panel.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 25));
         panel.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 25));
 
-        panel.Controls.Add(CreateSummaryCard("Total Devices", _totalDevicesValue), 0, 0);
-        panel.Controls.Add(CreateSummaryCard("Online", _onlineDevicesValue), 1, 0);
-        panel.Controls.Add(CreateSummaryCard("Active", _activeDevicesValue), 2, 0);
-        panel.Controls.Add(CreateSummaryCard("Last Action", _lastActionValue), 3, 0);
+        panel.Controls.Add(CreateSummaryCard("Managed Devices", _totalDevicesValue, Color.FromArgb(36, 74, 136)), 0, 0);
+        panel.Controls.Add(CreateSummaryCard("Online Now", _onlineDevicesValue, Color.FromArgb(24, 128, 84)), 1, 0);
+        panel.Controls.Add(CreateSummaryCard("Active Targets", _activeDevicesValue, Color.FromArgb(180, 98, 21)), 2, 0);
+        panel.Controls.Add(CreateSummaryCard("Last Action", _lastActionValue, Color.FromArgb(91, 33, 182)), 3, 0);
 
         return panel;
     }
 
     private Control BuildToolbarPanel()
     {
-        var panel = new FlowLayoutPanel
+        var panel = CreateCardPanel();
+        panel.Margin = new Padding(0, 0, 0, 12);
+        panel.Padding = new Padding(18, 14, 18, 14);
+
+        var flow = new FlowLayoutPanel
         {
             Dock = DockStyle.Fill,
-            FlowDirection = FlowDirection.LeftToRight,
-            WrapContents = true,
             AutoSize = true,
-            Margin = new Padding(0, 0, 0, 12)
+            WrapContents = true,
+            Margin = new Padding(0)
         };
 
-        panel.Controls.AddRange([
+        flow.Controls.AddRange([
             _addButton,
+            _scanButton,
             _editButton,
             _deleteButton,
             _startButton,
@@ -146,21 +156,44 @@ public partial class Form1 : Form
             _logsButton
         ]);
 
+        panel.Controls.Add(flow);
         return panel;
     }
 
-    private Control BuildGridPanel()
+    private Control BuildStatusPanel()
     {
+        var panel = CreateCardPanel();
+        panel.Margin = new Padding(0, 0, 0, 12);
+        panel.Padding = new Padding(18, 12, 18, 12);
+        _statusBanner.Text = "Ready. Select a device or scan the network to begin.";
+        panel.Controls.Add(_statusBanner);
+        return panel;
+    }
+
+    private Control BuildGridCard()
+    {
+        var panel = CreateCardPanel();
+        panel.Padding = new Padding(10);
+
         _deviceGrid.Dock = DockStyle.Fill;
         _deviceGrid.AllowUserToAddRows = false;
         _deviceGrid.AllowUserToDeleteRows = false;
         _deviceGrid.AllowUserToResizeRows = false;
         _deviceGrid.AutoSizeColumnsMode = DataGridViewAutoSizeColumnsMode.Fill;
-        _deviceGrid.BackgroundColor = SystemColors.Window;
+        _deviceGrid.BackgroundColor = Color.White;
+        _deviceGrid.BorderStyle = BorderStyle.None;
         _deviceGrid.MultiSelect = false;
         _deviceGrid.ReadOnly = true;
         _deviceGrid.RowHeadersVisible = false;
         _deviceGrid.SelectionMode = DataGridViewSelectionMode.FullRowSelect;
+        _deviceGrid.ColumnHeadersDefaultCellStyle.Font = new Font("Segoe UI Semibold", 9F, FontStyle.Bold);
+        _deviceGrid.EnableHeadersVisualStyles = false;
+        _deviceGrid.ColumnHeadersDefaultCellStyle.BackColor = Color.FromArgb(240, 244, 248);
+        _deviceGrid.ColumnHeadersDefaultCellStyle.ForeColor = Color.FromArgb(50, 62, 82);
+        _deviceGrid.DefaultCellStyle.SelectionBackColor = Color.FromArgb(224, 236, 255);
+        _deviceGrid.DefaultCellStyle.SelectionForeColor = Color.FromArgb(36, 49, 66);
+        _deviceGrid.RowsDefaultCellStyle.BackColor = Color.White;
+        _deviceGrid.AlternatingRowsDefaultCellStyle.BackColor = Color.FromArgb(249, 250, 251);
 
         _deviceGrid.Columns.Add(CreateTextColumn("Name", "Name"));
         _deviceGrid.Columns.Add(CreateTextColumn("IpAddress", "IP Address"));
@@ -170,16 +203,18 @@ public partial class Form1 : Form
         _deviceGrid.Columns.Add(CreateTextColumn("LastOperationSummary", "Last Operation"));
         _deviceGrid.Columns.Add(CreateTextColumn("Updated", "Updated"));
 
-        return _deviceGrid;
+        panel.Controls.Add(_deviceGrid);
+        return panel;
     }
 
     private void WireEvents()
     {
-        Shown += Form1_Shown;
-        FormClosing += Form1_FormClosing;
+        Shown += MainDashboardForm_Shown;
+        FormClosing += MainDashboardForm_FormClosing;
         _deviceGrid.SelectionChanged += (_, _) => UpdateActionButtons();
         _deviceGrid.CellDoubleClick += (_, _) => EditSelectedDevice();
         _addButton.Click += (_, _) => AddDevice();
+        _scanButton.Click += (_, _) => OpenNetworkScanner();
         _editButton.Click += (_, _) => EditSelectedDevice();
         _deleteButton.Click += (_, _) => DeleteSelectedDevice();
         _startButton.Click += async (_, _) => await ExecuteOperationForSelectionAsync(DevicePowerOperation.Start);
@@ -190,7 +225,7 @@ public partial class Form1 : Form
         _logsButton.Click += async (_, _) => await ShowLogsAsync();
     }
 
-    private async void Form1_Shown(object? sender, EventArgs e)
+    private async void MainDashboardForm_Shown(object? sender, EventArgs e)
     {
         try
         {
@@ -213,7 +248,7 @@ public partial class Form1 : Form
         }
     }
 
-    private async void Form1_FormClosing(object? sender, FormClosingEventArgs e)
+    private async void MainDashboardForm_FormClosing(object? sender, FormClosingEventArgs e)
     {
         if (e.CloseReason == CloseReason.WindowsShutDown)
         {
@@ -269,10 +304,8 @@ public partial class Form1 : Form
         _configurationStore.Save(_configuration);
         PopulateGrid();
         UpdateSummary();
-
-        string summary = $"Startup sequence completed for {results.Count} device(s).";
-        _lastActionValue.Text = summary;
-        MessageBox.Show(this, summary, "Controller Startup", MessageBoxButtons.OK, MessageBoxIcon.Information);
+        SetStatus($"Startup sequence completed for {results.Count} device(s).");
+        MessageBox.Show(this, $"Startup sequence completed for {results.Count} device(s).", "Controller Startup", MessageBoxButtons.OK, MessageBoxIcon.Information);
     }
 
     private async Task RunControllerShutdownAsync()
@@ -284,8 +317,7 @@ public partial class Form1 : Form
         _configurationStore.Save(_configuration);
         PopulateGrid();
         UpdateSummary();
-
-        _lastActionValue.Text = $"Shutdown sequence completed for {results.Count} device(s).";
+        SetStatus($"Shutdown sequence completed for {results.Count} device(s).");
     }
 
     private void ExecuteWindowsShutdownSequence()
@@ -333,6 +365,25 @@ public partial class Form1 : Form
         }).GetAwaiter().GetResult();
     }
 
+    private void OpenNetworkScanner()
+    {
+        using var scanner = new NetworkScannerForm(_networkScannerService, _configuration.GlobalSettings);
+        if (scanner.ShowDialog(this) != DialogResult.OK || scanner.Result is null)
+        {
+            return;
+        }
+
+        using var dialog = new DeviceDialogForm(_configuration.GlobalSettings, scanner.Result);
+        if (dialog.ShowDialog(this) != DialogResult.OK || dialog.Result is null)
+        {
+            return;
+        }
+
+        _configuration.Devices.Add(dialog.Result);
+        SaveAndRefresh();
+        SetStatus($"Added scanned device '{dialog.Result.Name}'.");
+    }
+
     private void AddDevice()
     {
         using var dialog = new DeviceDialogForm(_configuration.GlobalSettings);
@@ -343,6 +394,7 @@ public partial class Form1 : Form
 
         _configuration.Devices.Add(dialog.Result);
         SaveAndRefresh();
+        SetStatus($"Added device '{dialog.Result.Name}'.");
     }
 
     private void EditSelectedDevice()
@@ -364,6 +416,7 @@ public partial class Form1 : Form
         {
             _configuration.Devices[index] = dialog.Result;
             SaveAndRefresh();
+            SetStatus($"Updated device '{dialog.Result.Name}'.");
         }
     }
 
@@ -389,6 +442,7 @@ public partial class Form1 : Form
 
         _configuration.Devices.RemoveAll(device => device.DeviceId == selectedDevice.DeviceId);
         SaveAndRefresh();
+        SetStatus($"Deleted device '{selectedDevice.Name}'.");
     }
 
     private void EditSettings()
@@ -401,6 +455,7 @@ public partial class Form1 : Form
 
         _configuration.GlobalSettings = dialog.Result;
         SaveAndRefresh();
+        SetStatus("Global settings saved.");
     }
 
     private async Task ExecuteOperationForSelectionAsync(DevicePowerOperation operation)
@@ -425,6 +480,7 @@ public partial class Form1 : Form
         }
 
         ToggleBusyState(true);
+        SetStatus($"{operation} operation is running for '{selectedDevice.Name}'...");
 
         try
         {
@@ -437,6 +493,7 @@ public partial class Form1 : Form
             _configurationStore.Save(_configuration);
             PopulateGrid();
             UpdateSummary();
+            SetStatus(result.Message);
 
             MessageBoxIcon icon = result.IsSuccess
                 ? (result.HasWarning ? MessageBoxIcon.Warning : MessageBoxIcon.Information)
@@ -453,6 +510,7 @@ public partial class Form1 : Form
     private async Task RefreshStatusesAsync()
     {
         ToggleBusyState(true);
+        SetStatus("Refreshing device reachability...");
 
         try
         {
@@ -469,6 +527,7 @@ public partial class Form1 : Form
             _configurationStore.Save(_configuration);
             PopulateGrid();
             UpdateSummary();
+            SetStatus("Device statuses were refreshed.");
         }
         finally
         {
@@ -550,8 +609,8 @@ public partial class Form1 : Form
 
         foreach (Control control in new Control[]
                  {
-                     _addButton, _editButton, _deleteButton, _startButton, _rebootButton, _shutdownButton,
-                     _refreshButton, _settingsButton, _logsButton, _deviceGrid
+                     _addButton, _scanButton, _editButton, _deleteButton, _startButton, _rebootButton,
+                     _shutdownButton, _refreshButton, _settingsButton, _logsButton, _deviceGrid
                  })
         {
             control.Enabled = !isBusy;
@@ -563,25 +622,56 @@ public partial class Form1 : Form
         }
     }
 
-    private static Control CreateSummaryCard(string title, Label valueLabel)
+    private void SetStatus(string message)
     {
-        var card = new TableLayoutPanel
+        _statusBanner.Text = message;
+    }
+
+    private static Panel CreateCardPanel()
+    {
+        return new Panel
+        {
+            Dock = DockStyle.Fill,
+            BackColor = Color.White
+        };
+    }
+
+    private static Panel CreateSummaryCard(string title, Label valueLabel, Color accentColor)
+    {
+        var card = new Panel
+        {
+            Dock = DockStyle.Fill,
+            BackColor = Color.White,
+            Margin = new Padding(0, 0, 14, 0),
+            Padding = new Padding(18)
+        };
+
+        var accent = new Panel
+        {
+            Dock = DockStyle.Left,
+            Width = 4,
+            BackColor = accentColor
+        };
+
+        var content = new FlowLayoutPanel
         {
             Dock = DockStyle.Fill,
             AutoSize = true,
-            Padding = new Padding(12),
-            Margin = new Padding(0, 0, 12, 0),
-            BackColor = Color.WhiteSmoke
+            FlowDirection = FlowDirection.TopDown,
+            WrapContents = false,
+            Margin = new Padding(12, 0, 0, 0)
         };
 
-        card.Controls.Add(new Label
+        content.Controls.Add(new Label
         {
             Text = title,
             AutoSize = true,
-            ForeColor = Color.DimGray
-        }, 0, 0);
+            ForeColor = Color.FromArgb(91, 102, 122)
+        });
+        content.Controls.Add(valueLabel);
 
-        card.Controls.Add(valueLabel, 0, 1);
+        card.Controls.Add(content);
+        card.Controls.Add(accent);
         return card;
     }
 
@@ -590,9 +680,30 @@ public partial class Form1 : Form
         return new Label
         {
             AutoSize = true,
-            Font = new Font(SystemFonts.DefaultFont.FontFamily, 14, FontStyle.Bold),
-            Margin = new Padding(0, 8, 0, 0)
+            Font = new Font("Segoe UI Semibold", 14F, FontStyle.Bold),
+            Margin = new Padding(0, 8, 0, 0),
+            ForeColor = Color.FromArgb(22, 36, 57)
         };
+    }
+
+    private static Button CreateActionButton(string text)
+    {
+        var button = new Button
+        {
+            Text = text,
+            AutoSize = true,
+            AutoSizeMode = AutoSizeMode.GrowAndShrink,
+            BackColor = Color.FromArgb(244, 247, 252),
+            FlatStyle = FlatStyle.Flat,
+            Margin = new Padding(0, 0, 10, 8),
+            Padding = new Padding(14, 8, 14, 8)
+        };
+
+        button.FlatAppearance.BorderColor = Color.FromArgb(221, 228, 237);
+        button.FlatAppearance.MouseDownBackColor = Color.FromArgb(225, 235, 250);
+        button.FlatAppearance.MouseOverBackColor = Color.FromArgb(234, 241, 251);
+
+        return button;
     }
 
     private static DataGridViewTextBoxColumn CreateTextColumn(string name, string headerText)

@@ -1,7 +1,7 @@
 #nullable disable
 namespace Control_OS_Lunix
 {
-    partial class Form1
+    partial class MainDashboardForm
     {
         private System.ComponentModel.IContainer components = null;
 
@@ -19,10 +19,12 @@ namespace Control_OS_Lunix
         {
             components = new System.ComponentModel.Container();
             AutoScaleMode = AutoScaleMode.Font;
-            ClientSize = new Size(1320, 760);
-            MinimumSize = new Size(1100, 680);
+            BackColor = Color.FromArgb(243, 246, 249);
+            ClientSize = new Size(1420, 820);
+            Font = new Font("Segoe UI", 9F, FontStyle.Regular, GraphicsUnit.Point);
+            MinimumSize = new Size(1160, 720);
             StartPosition = FormStartPosition.CenterScreen;
-            Text = "Network Power Control System";
+            Text = "LanPower Manager";
         }
     }
 }
