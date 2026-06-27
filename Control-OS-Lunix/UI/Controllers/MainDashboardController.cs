@@ -15,6 +15,7 @@ public sealed class MainDashboardController : IMainDashboardController
 
     private readonly IConfigurationStore _configurationStore;
     private readonly IBackupRestoreService _backupRestoreService;
+    private readonly IWindowsStartupService _windowsStartupService;
     private readonly ILogService _logService;
     private readonly IDevicePowerService _devicePowerService;
     private readonly IControllerOrchestrator _controllerOrchestrator;
@@ -29,6 +30,7 @@ public sealed class MainDashboardController : IMainDashboardController
     public MainDashboardController(
         IConfigurationStore configurationStore,
         IBackupRestoreService backupRestoreService,
+        IWindowsStartupService windowsStartupService,
         ILogService logService,
         IDevicePowerService devicePowerService,
         IControllerOrchestrator controllerOrchestrator,
@@ -36,6 +38,7 @@ public sealed class MainDashboardController : IMainDashboardController
     {
         _configurationStore = configurationStore;
         _backupRestoreService = backupRestoreService;
+        _windowsStartupService = windowsStartupService;
         _logService = logService;
         _devicePowerService = devicePowerService;
         _controllerOrchestrator = controllerOrchestrator;
@@ -65,6 +68,7 @@ public sealed class MainDashboardController : IMainDashboardController
 
     private async Task HandleViewLoadedAsync()
     {
+        Result startupRegistrationResult = _windowsStartupService.EnsureRegistered();
         Result<AppConfiguration> loadResult = _configurationStore.Load();
         if (!loadResult.IsSuccess || loadResult.Value is null)
         {
@@ -76,6 +80,11 @@ public sealed class MainDashboardController : IMainDashboardController
         _logService.EnforceRetention(_configuration.GlobalSettings.LogRetentionDays);
         RenderConfiguration();
         await RefreshStatusesAsync();
+
+        if (!startupRegistrationResult.IsSuccess)
+        {
+            _view!.SetStatus("The app is running, but Windows auto-start registration could not be completed.");
+        }
 
         if (!_startupSequenceCompleted && _configuration.GlobalSettings.AutoStartDevicesOnControllerBoot)
         {
@@ -348,7 +357,6 @@ public sealed class MainDashboardController : IMainDashboardController
         SaveAndRender();
         int count = result.Value?.Count ?? 0;
         _view!.SetStatus($"Startup sequence completed for {count} device(s).");
-        _view.ShowInfo($"Startup sequence completed for {count} device(s).", "Controller Startup");
     }
 
     private async Task RunControllerShutdownAsync()

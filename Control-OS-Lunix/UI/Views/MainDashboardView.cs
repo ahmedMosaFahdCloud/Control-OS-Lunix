@@ -7,6 +7,8 @@ public sealed class MainDashboardView : Form, IMainDashboardView
 {
     private const uint WmQueryEndSession = 0x0011;
 
+    private readonly NotifyIcon _trayIcon;
+    private readonly ContextMenuStrip _trayMenu;
     private readonly Label _totalDevicesValue = CreateSummaryValueLabel();
     private readonly Label _onlineDevicesValue = CreateSummaryValueLabel();
     private readonly Label _activeDevicesValue = CreateSummaryValueLabel();
@@ -25,6 +27,8 @@ public sealed class MainDashboardView : Form, IMainDashboardView
     private readonly Button _logsButton = CreateActionButton("View Logs");
     private readonly Button _backupButton = CreateActionButton("Backup Data");
     private readonly Button _restoreButton = CreateActionButton("Restore Data");
+    private bool _exitRequested;
+    private bool _firstTrayHideCompleted;
 
     public MainDashboardView()
     {
@@ -35,6 +39,14 @@ public sealed class MainDashboardView : Form, IMainDashboardView
         Width = 1420;
         Height = 820;
         MinimumSize = new Size(1160, 720);
+        _trayMenu = BuildTrayMenu();
+        _trayIcon = new NotifyIcon
+        {
+            Text = "LanPower Manager",
+            Icon = SystemIcons.Application,
+            Visible = true,
+            ContextMenuStrip = _trayMenu
+        };
         BuildLayout();
         WireEvents();
     }
@@ -137,7 +149,11 @@ public sealed class MainDashboardView : Form, IMainDashboardView
         return dialog.ShowDialog(this) == DialogResult.OK ? dialog.FileName : null;
     }
 
-    public void RequestClose() => Close();
+    public void RequestClose()
+    {
+        _exitRequested = true;
+        Close();
+    }
 
     protected override void WndProc(ref Message m)
     {
@@ -187,7 +203,22 @@ public sealed class MainDashboardView : Form, IMainDashboardView
     private void WireEvents()
     {
         Shown += (_, _) => ViewLoaded?.Invoke(this, EventArgs.Empty);
-        FormClosing += (sender, args) => ViewClosing?.Invoke(sender, args);
+        Shown += (_, _) => BeginInvoke(HideToTray);
+        Resize += (_, _) =>
+        {
+            if (WindowState == FormWindowState.Minimized)
+            {
+                HideToTray();
+            }
+        };
+        FormClosing += HandleFormClosing;
+        FormClosed += (_, _) =>
+        {
+            _trayIcon.Visible = false;
+            _trayIcon.Dispose();
+            _trayMenu.Dispose();
+        };
+        _trayIcon.DoubleClick += (_, _) => RestoreFromTray();
         _deviceGrid.SelectionChanged += (_, _) => UpdateSelectionButtons();
         _deviceGrid.CellDoubleClick += (_, _) => EditRequested?.Invoke(this, EventArgs.Empty);
         _addButton.Click += (_, _) => AddRequested?.Invoke(this, EventArgs.Empty);
@@ -202,6 +233,64 @@ public sealed class MainDashboardView : Form, IMainDashboardView
         _logsButton.Click += (_, _) => LogsRequested?.Invoke(this, EventArgs.Empty);
         _backupButton.Click += (_, _) => BackupRequested?.Invoke(this, EventArgs.Empty);
         _restoreButton.Click += (_, _) => RestoreRequested?.Invoke(this, EventArgs.Empty);
+    }
+
+    private void HandleFormClosing(object? sender, FormClosingEventArgs args)
+    {
+        if (args.CloseReason == CloseReason.UserClosing && !_exitRequested)
+        {
+            args.Cancel = true;
+            HideToTray();
+            return;
+        }
+
+        ViewClosing?.Invoke(sender, args);
+    }
+
+    private ContextMenuStrip BuildTrayMenu()
+    {
+        var menu = new ContextMenuStrip();
+        menu.Items.Add("Open Dashboard", null, (_, _) => RestoreFromTray());
+        menu.Items.Add("Exit", null, (_, _) => BeginExitFromTray());
+        return menu;
+    }
+
+    private void HideToTray()
+    {
+        if (IsDisposed)
+        {
+            return;
+        }
+
+        Hide();
+        ShowInTaskbar = false;
+        WindowState = FormWindowState.Minimized;
+
+        if (_firstTrayHideCompleted)
+        {
+            return;
+        }
+
+        _trayIcon.ShowBalloonTip(
+            2500,
+            "LanPower Manager",
+            "The app is still running in the system tray next to the clock.",
+            ToolTipIcon.Info);
+        _firstTrayHideCompleted = true;
+    }
+
+    private void RestoreFromTray()
+    {
+        Show();
+        ShowInTaskbar = true;
+        WindowState = FormWindowState.Normal;
+        Activate();
+    }
+
+    private void BeginExitFromTray()
+    {
+        _exitRequested = true;
+        Close();
     }
 
     private void UpdateSelectionButtons()
