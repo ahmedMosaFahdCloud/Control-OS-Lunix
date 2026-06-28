@@ -18,7 +18,7 @@
           "builder": "@angular/build:application",
           "options": {
             "outputPath": {
-              "base": "../../src/ControlOS.Api/wwwroot"
+              "base": "../ControlOS.Api/wwwroot"
             },
             "browser": "src/main.ts",
             "tsConfig": "tsconfig.app.json",

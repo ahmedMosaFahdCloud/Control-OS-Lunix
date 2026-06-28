@@ -46,7 +46,7 @@ Control-OS-Lunix/
 │  ├─ ControlOS.Api/         # ASP.NET Core Web API
 │  ├─ ControlOS.Agent/       # Windows Worker Service (automation)
 │  └─ ControlOS.Tray/        # Desktop tray app (recommended launcher)
-├─ web/
+├─ src/
 │  └─ control-os-web/        # Angular 21 SPA frontend
 └─ Control-OS-Linux.sln
 ```
@@ -183,7 +183,7 @@ Build everything and produce `ControlOS.exe`:
 
 ```powershell
 # 1. Build Angular frontend
-cd web\control-os-web
+cd src\control-os-web
 npm install
 npm run build
 
@@ -223,7 +223,7 @@ dotnet build .\Control-OS-Linux.sln
 #### Frontend (standalone dev)
 
 ```powershell
-cd .\web\control-os-web
+cd .\src\control-os-web
 npm install
 npm run build       # production build
 npm run start       # dev server on http://localhost:4200

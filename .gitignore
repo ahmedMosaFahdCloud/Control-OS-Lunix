@@ -12,7 +12,7 @@ obj/
 
 # Node / Angular
 node_modules/
-web/control-os-web/dist/
+src/control-os-web/dist/
 
 # Angular build output (copied to .NET projects)
 src/**/wwwroot/
