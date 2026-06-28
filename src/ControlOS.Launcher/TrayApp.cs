@@ -2,6 +2,7 @@ using System.Diagnostics;
 using System.Linq;
 using System.Text.Json.Serialization;
 using ControlOS.Api.DependencyInjection;
+using ControlOS.Tray.Resources;
 using Microsoft.Win32;
 
 namespace ControlOS.Tray;
@@ -25,7 +26,7 @@ public sealed class TrayApp : ApplicationContext
         {
             Text = $"{AppTitle}\n{AppUrl}",
             Visible = true,
-            Icon = SystemIcons.Application
+            Icon = AppIcon.GetIcon()
         };
 
         var menu = new ContextMenuStrip();
@@ -86,24 +87,41 @@ public sealed class TrayApp : ApplicationContext
                 string baseDir = AppDomain.CurrentDomain.BaseDirectory;
                 string spaPath = Path.Combine(baseDir, "wwwroot", "browser");
 
+                app.UseCors();
+                app.MapControllers();
+
+                // API 404 fallback - must be after MapControllers
+                app.MapFallback("/api/{**path}", async (HttpContext ctx) =>
+                {
+                    ctx.Response.StatusCode = StatusCodes.Status404NotFound;
+                    ctx.Response.ContentType = "application/problem+json";
+                    await ctx.Response.WriteAsJsonAsync(new
+                    {
+                        type = "https://tools.ietf.org/html/rfc9110#section-15.5.5",
+                        title = "Not Found",
+                        status = 404,
+                        detail = $"The requested API endpoint '{ctx.Request.Path}' does not exist."
+                    });
+                });
+
                 if (Directory.Exists(spaPath))
                 {
-                    app.UseDefaultFiles(new DefaultFilesOptions
+                    app.UseWhen(ctx => !ctx.Request.Path.StartsWithSegments("/api"), nonApi =>
                     {
-                        FileProvider = new Microsoft.Extensions.FileProviders.PhysicalFileProvider(spaPath)
-                    });
-                    app.UseStaticFiles(new StaticFileOptions
-                    {
-                        FileProvider = new Microsoft.Extensions.FileProviders.PhysicalFileProvider(spaPath)
+                        nonApi.UseDefaultFiles(new DefaultFilesOptions
+                        {
+                            FileProvider = new Microsoft.Extensions.FileProviders.PhysicalFileProvider(spaPath)
+                        });
+                        nonApi.UseStaticFiles(new StaticFileOptions
+                        {
+                            FileProvider = new Microsoft.Extensions.FileProviders.PhysicalFileProvider(spaPath)
+                        });
                     });
                     app.MapFallbackToFile("index.html", new StaticFileOptions
                     {
                         FileProvider = new Microsoft.Extensions.FileProviders.PhysicalFileProvider(spaPath)
                     });
                 }
-
-                app.UseCors();
-                app.MapControllers();
 
                 await app.RunAsync(_apiCts.Token);
             }

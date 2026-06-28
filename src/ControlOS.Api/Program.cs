@@ -52,12 +52,29 @@ else
     string spaPath = Path.Combine(app.Environment.WebRootPath, "browser");
     var fileProvider = new PhysicalFileProvider(spaPath);
 
-    app.UseDefaultFiles(new DefaultFilesOptions { FileProvider = fileProvider });
-    app.UseStaticFiles(new StaticFileOptions { FileProvider = fileProvider });
+    app.UseWhen(ctx => !ctx.Request.Path.StartsWithSegments("/api"), nonApi =>
+    {
+        nonApi.UseDefaultFiles(new DefaultFilesOptions { FileProvider = fileProvider });
+        nonApi.UseStaticFiles(new StaticFileOptions { FileProvider = fileProvider });
+    });
     app.MapFallbackToFile("index.html", new StaticFileOptions { FileProvider = fileProvider });
 }
 
 app.UseCors("control-os-web");
 app.MapControllers();
+
+// Return 404 JSON for unmatched /api/* routes instead of falling through to the SPA
+app.MapFallback("/api/{**path}", async (HttpContext ctx) =>
+{
+    ctx.Response.StatusCode = StatusCodes.Status404NotFound;
+    ctx.Response.ContentType = "application/problem+json";
+    await ctx.Response.WriteAsJsonAsync(new
+    {
+        type = "https://tools.ietf.org/html/rfc9110#section-15.5.5",
+        title = "Not Found",
+        status = 404,
+        detail = $"The requested API endpoint '{ctx.Request.Path}' does not exist."
+    });
+});
 
 app.Run();

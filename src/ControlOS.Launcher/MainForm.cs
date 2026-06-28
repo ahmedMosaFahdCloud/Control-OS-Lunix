@@ -1,5 +1,6 @@
 using System.Diagnostics;
 using System.Drawing.Drawing2D;
+using ControlOS.Tray.Resources;
 
 namespace ControlOS.Tray;
 
@@ -17,7 +18,7 @@ public sealed class MainForm : Form
         MaximizeBox = false;
         StartPosition = FormStartPosition.CenterScreen;
         BackColor = Color.FromArgb(248, 250, 252);
-        Icon = SystemIcons.Application;
+        Icon = AppIcon.GetIcon();
 
         var titlePanel = CreateTitlePanel();
         var statusPanel = CreateStatusPanel();
