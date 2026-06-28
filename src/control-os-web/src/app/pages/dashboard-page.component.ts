@@ -129,7 +129,7 @@ import { HlmProgressImports } from '@spartan-ng/helm/progress';
                             [class.text-destructive]="device.lastKnownStatus === STATUS.OFFLINE"
                             [class.bg-warning/10]="device.lastKnownStatus === STATUS.UNKNOWN"
                             [class.text-warning]="device.lastKnownStatus === STATUS.UNKNOWN"
-                            [class.bg-muted]="![STATUS.ONLINE, STATUS.OFFLINE, STATUS.UNKNOWN].includes(device.lastKnownStatus)"
+                            [class.bg-muted]="isMutedStatus(device.lastKnownStatus)"
                             class="gap-1"
                           >
                             <span class="h-1.5 w-1.5 rounded-full"
@@ -232,5 +232,9 @@ export class DashboardPageComponent {
 
   deviceOSIcon(os: string): string {
     return OS_ICON[os] ?? 'cpu';
+  }
+
+  isMutedStatus(status: string): boolean {
+    return status !== STATUS.ONLINE && status !== STATUS.OFFLINE && status !== STATUS.UNKNOWN;
   }
 }
