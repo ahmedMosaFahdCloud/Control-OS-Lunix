@@ -1,7 +1,7 @@
-using Control_OS_Lunix.Backend.Interfaces;
-using Control_OS_Lunix.Backend.Models;
-using Control_OS_Lunix.Backend.Results;
-using Control_OS_Lunix.Backend.Services;
+using ControlOS.Api.Backend.Interfaces;
+using ControlOS.Api.Backend.Models;
+using ControlOS.Api.Backend.Results;
+using ControlOS.Api.Backend.Services;
 using ControlOS.Api.Features.Dashboard;
 using ControlOS.Api.Features.Devices;
 using ControlOS.Api.Features.Settings;

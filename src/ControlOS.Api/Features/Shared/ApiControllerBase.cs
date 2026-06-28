@@ -1,4 +1,4 @@
-using Control_OS_Lunix.Backend.Results;
+using ControlOS.Api.Backend.Results;
 using Microsoft.AspNetCore.Mvc;
 
 namespace ControlOS.Api.Features.Shared;

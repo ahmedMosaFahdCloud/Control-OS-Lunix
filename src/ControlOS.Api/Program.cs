@@ -1,6 +1,7 @@
 using System.Text.Json.Serialization;
-using Control_OS_Lunix.Core.DependencyInjection;
+using ControlOS.Api.DependencyInjection;
 using ControlOS.Api.Features.Shared;
+using ControlOS.Api.Workers;
 using Microsoft.Extensions.FileProviders;
 
 WebApplicationBuilder builder = WebApplication.CreateBuilder(args);
@@ -19,7 +20,8 @@ builder.Services.AddCors(options =>
 
 builder.Services
     .AddControlOsCoreServices()
-    .AddSingleton<ControlCenterService>();
+    .AddSingleton<ControlCenterService>()
+    .AddHostedService<ControllerAutomationWorker>();
 
 builder.Services.AddControllers()
     .AddJsonOptions(options =>

@@ -1,4 +1,4 @@
-using Control_OS_Lunix.Backend.Models;
+using ControlOS.Api.Backend.Models;
 
 namespace ControlOS.Api.Features.Devices;
 
