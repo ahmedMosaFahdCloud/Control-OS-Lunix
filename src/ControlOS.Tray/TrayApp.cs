@@ -1,4 +1,5 @@
 using System.Diagnostics;
+using System.Linq;
 using System.Text.Json.Serialization;
 using Control_OS_Lunix.Core.DependencyInjection;
 using Microsoft.Win32;
@@ -178,7 +179,7 @@ public sealed class TrayApp : ApplicationContext
         }
         catch { }
 
-        foreach (ToolStripMenuItem item in _trayIcon.ContextMenuStrip!.Items)
+        foreach (ToolStripMenuItem item in _trayIcon.ContextMenuStrip!.Items.OfType<ToolStripMenuItem>())
         {
             if (item.Text == "Auto-start with Windows")
             {

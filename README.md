@@ -42,14 +42,23 @@ The original WinForms project is still in the repository as a legacy reference, 
 ```text
 Control-OS-Lunix/
 ├─ src/
-│  ├─ ControlOS.Core/
-│  ├─ ControlOS.Api/
-│  └─ ControlOS.Agent/
+│  ├─ ControlOS.Core/        # shared backend library
+│  ├─ ControlOS.Api/         # ASP.NET Core Web API
+│  ├─ ControlOS.Agent/       # Windows Worker Service (automation)
+│  └─ ControlOS.Tray/        # Desktop tray app (recommended launcher)
 ├─ web/
-│  └─ control-os-web/
-├─ Control-OS-Lunix/         # legacy WinForms reference code
+│  └─ control-os-web/        # Angular 21 SPA frontend
 └─ Control-OS-Linux.sln
 ```
+
+## Desktop App (Recommended)
+
+`ControlOS.Tray` is the single app you should use.
+It bundles the API in-process, serves the Angular frontend, and lives in the system tray.
+
+- Auto-opens your browser to the dashboard on launch
+- Minimizes to system tray (near the clock) when you close the window
+- Right-click tray icon for options: Show Window, Open Browser, Open Config Folder, Auto-start with Windows, Exit
 
 ## Project Roles
 
@@ -84,6 +93,15 @@ Main responsibilities:
 - register startup with Windows
 - run controller startup automation
 - run controller shutdown automation when the host stops
+
+### ControlOS.Tray
+
+The recommended desktop launcher. A WinForms system-tray app that:
+- Starts the entire ASP.NET Core API in-process (`http://localhost:5081`)
+- Serves the Angular SPA from `wwwroot/browser/`
+- Shows a status window (minimizes to tray on close)
+- Auto-opens the dashboard in your default browser
+- Provides tray icon with quick actions (Open Browser, Open Config, Auto-start, Exit)
 
 ### control-os-web
 
@@ -154,18 +172,61 @@ Typical files:
 
 ## Build
 
-### Backend
+### Prerequisites
+
+- [.NET 8 SDK](https://dotnet.microsoft.com/download/dotnet/8.0)
+- [Node.js](https://nodejs.org/) (for the Angular frontend)
+
+### Quick Build (Desktop App)
+
+Build everything and produce `ControlOS.exe`:
 
 ```powershell
-dotnet build .\src\ControlOS.Api\ControlOS.Api.csproj
-dotnet build .\src\ControlOS.Agent\ControlOS.Agent.csproj
+# 1. Build Angular frontend
+cd web\control-os-web
+npm install
+npm run build
+
+# 2. Copy Angular output to Tray project
+cd ..\..
+Copy-Item -Recurse -Force src\ControlOS.Api\wwwroot\browser src\ControlOS.Tray\wwwroot\
+
+# 3. Build the desktop tray app
+dotnet build src\ControlOS.Tray\ControlOS.Tray.csproj
 ```
 
-### Frontend
+The output is at `src\ControlOS.Tray\bin\Debug\net8.0-windows\ControlOS.exe`.
+
+### Run
+
+```powershell
+.\src\ControlOS.Tray\bin\Debug\net8.0-windows\ControlOS.exe
+```
+
+The app will open your browser to `http://localhost:5081` and add an icon to the system tray.
+
+### Build Individual Components
+
+#### Backend
+
+```powershell
+# API only
+dotnet build .\src\ControlOS.Api\ControlOS.Api.csproj
+
+# Agent only
+dotnet build .\src\ControlOS.Agent\ControlOS.Agent.csproj
+
+# All backend projects
+dotnet build .\Control-OS-Linux.sln
+```
+
+#### Frontend (standalone dev)
 
 ```powershell
 cd .\web\control-os-web
-npm run build
+npm install
+npm run build       # production build
+npm run start       # dev server on http://localhost:4200
 ```
 
 ## Notes
