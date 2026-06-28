@@ -72,6 +72,7 @@ public sealed class TrayApp : ApplicationContext
                 builder.Services.AddControlOsCoreServices();
 
                 builder.Services.AddControllers()
+                    .AddApplicationPart(typeof(ControlOS.Api.Features.Devices.DevicesController).Assembly)
                     .AddJsonOptions(options =>
                     {
                         options.JsonSerializerOptions.Converters.Add(new JsonStringEnumConverter());
