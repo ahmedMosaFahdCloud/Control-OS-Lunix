@@ -1,6 +1,7 @@
 import { HttpClient, HttpParams } from '@angular/common/http';
-import { inject, Injectable, isDevMode } from '@angular/core';
+import { inject, Injectable } from '@angular/core';
 import { Observable } from 'rxjs';
+import { environment } from '../../environments/environment';
 import {
   BackupResponse,
   DashboardResponse,
@@ -17,7 +18,7 @@ import {
 @Injectable({ providedIn: 'root' })
 export class ControlApiService {
   private readonly http = inject(HttpClient);
-  private readonly apiBaseUrl = isDevMode() ? 'http://localhost:58432/api' : '/api';
+  private readonly apiBaseUrl = environment.apiBaseUrl;
 
   getDashboard(refresh = true, logLines = 20): Observable<DashboardResponse> {
     const params = new HttpParams()

@@ -1,15 +1,17 @@
-export type DeviceOperatingSystemType = 'Linux' | 'Windows';
+import { OPERATION, OS, STATUS } from './constants';
+
+export type DeviceOperatingSystemType = typeof OS.LINUX | typeof OS.WINDOWS;
 
 export type DevicePowerStatus =
-  | 'Online'
-  | 'Offline'
-  | 'Starting'
-  | 'ShuttingDown'
-  | 'Rebooting'
-  | 'Unknown'
-  | 'Error';
+  | typeof STATUS.ONLINE
+  | typeof STATUS.OFFLINE
+  | typeof STATUS.STARTING
+  | typeof STATUS.SHUTTING_DOWN
+  | typeof STATUS.REBOOTING
+  | typeof STATUS.UNKNOWN
+  | typeof STATUS.ERROR;
 
-export type DevicePowerOperation = 'Start' | 'Shutdown' | 'Reboot';
+export type DevicePowerOperation = typeof OPERATION.START | typeof OPERATION.SHUTDOWN | typeof OPERATION.REBOOT;
 
 export interface Device {
   deviceId: string;

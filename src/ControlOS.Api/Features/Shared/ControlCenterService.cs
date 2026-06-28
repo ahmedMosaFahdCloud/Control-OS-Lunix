@@ -1,35 +1,33 @@
-using ControlOS.Api.Backend.Interfaces;
-using ControlOS.Api.Backend.Models;
-using ControlOS.Api.Backend.Results;
-using ControlOS.Api.Backend.Services;
+using ControlOS.Api.Features.Shared.Models;
 using ControlOS.Api.Features.Dashboard;
 using ControlOS.Api.Features.Devices;
 using ControlOS.Api.Features.Settings;
 using ControlOS.Api.Features.Logs;
 using ControlOS.Api.Features.Network;
 using ControlOS.Api.Features.Backups;
+using ControlOS.Api.Infrastructure.Services;
 
 namespace ControlOS.Api.Features.Shared;
 
 public sealed class ControlCenterService
 {
-    private readonly IConfigurationStore _configurationStore;
-    private readonly IDeviceValidator _deviceValidator;
-    private readonly IDevicePowerService _devicePowerService;
-    private readonly IControllerOrchestrator _controllerOrchestrator;
-    private readonly INetworkScannerService _networkScannerService;
-    private readonly ILogService _logService;
-    private readonly IBackupRestoreService _backupRestoreService;
+    private readonly JsonConfigurationStore _configurationStore;
+    private readonly DeviceValidatorService _deviceValidator;
+    private readonly DevicePowerService _devicePowerService;
+    private readonly ControllerOrchestrator _controllerOrchestrator;
+    private readonly NetworkScannerService _networkScannerService;
+    private readonly LogService _logService;
+    private readonly BackupRestoreService _backupRestoreService;
     private readonly SemaphoreSlim _syncLock = new(1, 1);
 
     public ControlCenterService(
-        IConfigurationStore configurationStore,
-        IDeviceValidator deviceValidator,
-        IDevicePowerService devicePowerService,
-        IControllerOrchestrator controllerOrchestrator,
-        INetworkScannerService networkScannerService,
-        ILogService logService,
-        IBackupRestoreService backupRestoreService)
+        JsonConfigurationStore configurationStore,
+        DeviceValidatorService deviceValidator,
+        DevicePowerService devicePowerService,
+        ControllerOrchestrator controllerOrchestrator,
+        NetworkScannerService networkScannerService,
+        LogService logService,
+        BackupRestoreService backupRestoreService)
     {
         _configurationStore = configurationStore;
         _deviceValidator = deviceValidator;

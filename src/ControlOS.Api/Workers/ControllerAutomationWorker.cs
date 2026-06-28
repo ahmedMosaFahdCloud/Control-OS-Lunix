@@ -1,22 +1,22 @@
-using ControlOS.Api.Backend.Interfaces;
-using ControlOS.Api.Backend.Models;
+using ControlOS.Api.Features.Shared.Models;
+using ControlOS.Api.Infrastructure.Services;
 
 namespace ControlOS.Api.Workers;
 
 public sealed class ControllerAutomationWorker : BackgroundService
 {
-    private readonly IConfigurationStore _configurationStore;
-    private readonly IControllerOrchestrator _controllerOrchestrator;
-    private readonly IWindowsStartupService _windowsStartupService;
+    private readonly JsonConfigurationStore _configurationStore;
+    private readonly ControllerOrchestrator _controllerOrchestrator;
+    private readonly WindowsStartupService _windowsStartupService;
     private readonly ILogger<ControllerAutomationWorker> _logger;
     private readonly IHostApplicationLifetime _applicationLifetime;
 
     private AppConfiguration? _configuration;
 
     public ControllerAutomationWorker(
-        IConfigurationStore configurationStore,
-        IControllerOrchestrator controllerOrchestrator,
-        IWindowsStartupService windowsStartupService,
+        JsonConfigurationStore configurationStore,
+        ControllerOrchestrator controllerOrchestrator,
+        WindowsStartupService windowsStartupService,
         ILogger<ControllerAutomationWorker> logger,
         IHostApplicationLifetime applicationLifetime)
     {

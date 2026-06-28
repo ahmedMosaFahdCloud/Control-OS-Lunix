@@ -1,4 +1,4 @@
-using ControlOS.Api.Backend.Models;
+using ControlOS.Api.Features.Shared.Models;
 
 namespace ControlOS.Api.Features.Devices;
 

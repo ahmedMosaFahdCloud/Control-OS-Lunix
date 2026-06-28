@@ -3,12 +3,36 @@ import { FormBuilder, ReactiveFormsModule } from '@angular/forms';
 import { finalize } from 'rxjs';
 import { ControlApiService } from '../core/control-api.service';
 import { DeviceUpsertRequest, NetworkScanResult } from '../core/api.models';
+import { DEFAULTS, ERROR_MSGS } from '../core/constants';
 import { IconComponent } from '../shared/components/icon.component';
 import { ToastService } from '../shared/services/toast.service';
 import { HlmButton } from '@spartan-ng/helm/button';
 import { HlmInput } from '@spartan-ng/helm/input';
 import { HlmLabel } from '@spartan-ng/helm/label';
 import { HlmCard, HlmCardHeader, HlmCardTitle, HlmCardDescription, HlmCardContent, HlmCardFooter } from '@spartan-ng/helm/card';
+
+const SCAN_FORM_DEFAULTS = {
+  subnetPrefix: DEFAULTS.SUBNET_PREFIX,
+  startHost: DEFAULTS.SCAN_START_HOST,
+  endHost: DEFAULTS.SCAN_END_HOST,
+  timeoutMs: DEFAULTS.SCAN_TIMEOUT_MS,
+  maxConcurrency: DEFAULTS.SCAN_MAX_CONCURRENCY,
+} as const;
+
+const DEVICE_FORM_DEFAULTS = {
+  broadcastAddress: DEFAULTS.BROADCAST_ADDRESS,
+  wolPort: DEFAULTS.WOL_PORT,
+  sshPort: DEFAULTS.SSH_PORT,
+  sshUsername: DEFAULTS.SSH_USERNAME,
+  sshPassword: DEFAULTS.SSH_PASSWORD,
+  operatingSystemType: DEFAULTS.OS_TYPE,
+  autoStartEnabled: DEFAULTS.AUTO_START,
+  autoShutdownEnabled: DEFAULTS.AUTO_SHUTDOWN,
+  manualControlEnabled: DEFAULTS.MANUAL_CONTROL,
+  timeoutSeconds: DEFAULTS.TIMEOUT_SECONDS,
+  retryCount: DEFAULTS.RETRY_COUNT,
+  isActive: DEFAULTS.IS_ACTIVE,
+} as const;
 
 @Component({
   selector: 'app-scanner-page',
@@ -133,13 +157,7 @@ export class ScannerPageComponent {
   readonly isScanning = signal(false);
   readonly addingIps = signal(new Set<string>());
 
-  readonly scanForm = this.formBuilder.group({
-    subnetPrefix: '192.168.1',
-    startHost: 1,
-    endHost: 40,
-    timeoutMs: 700,
-    maxConcurrency: 24
-  });
+  readonly scanForm = this.formBuilder.group(SCAN_FORM_DEFAULTS);
 
   scan(): void {
     this.isScanning.set(true);
@@ -149,7 +167,7 @@ export class ScannerPageComponent {
 
     this.api.scanNetwork(this.scanForm.getRawValue()).pipe(finalize(() => this.isScanning.set(false))).subscribe({
       next: r => this.results.set(r),
-      error: e => this.toast.error(e.error?.detail ?? 'Scan failed.')
+      error: () => this.toast.error(ERROR_MSGS.SCAN)
     });
   }
 
@@ -162,26 +180,13 @@ export class ScannerPageComponent {
       name: result.hostName || result.ipAddress,
       ipAddress: result.ipAddress,
       macAddress: result.macAddress,
-      broadcastAddress: '255.255.255.255',
-      wolPort: 9,
+      ...DEVICE_FORM_DEFAULTS,
       sshHost: result.ipAddress,
-      sshPort: 22,
-      sshUsername: '',
-      sshPassword: '',
-      operatingSystemType: 'Linux',
-      autoStartEnabled: true,
-      autoShutdownEnabled: true,
-      manualControlEnabled: true,
-      timeoutSeconds: 15,
-      retryCount: 1,
       description: `Imported from scan: ${result.ipAddress}`,
-      isActive: true
     };
 
     this.api.createDevice(request).subscribe({
-      next: () => {
-        this.toast.success(`Added ${result.ipAddress} as a device.`);
-      },
+      next: () => this.toast.success(`Added ${result.ipAddress} as a device.`),
       error: e => {
         this.addingIps.update(s => { const n = new Set(s); n.delete(result.ipAddress); return n; });
         this.toast.error(e.error?.detail ?? 'Failed to save host.');

@@ -1,5 +1,5 @@
-using ControlOS.Api.Backend.Models;
 using ControlOS.Api.Features.Shared;
+using ControlOS.Api.Features.Shared.Models;
 using Microsoft.AspNetCore.Mvc;
 
 namespace ControlOS.Api.Features.Devices;

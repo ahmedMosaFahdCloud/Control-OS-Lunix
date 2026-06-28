@@ -4,6 +4,7 @@ import { RouterLink } from '@angular/router';
 import { finalize, interval } from 'rxjs';
 import { ControlApiService } from '../core/control-api.service';
 import { DashboardResponse } from '../core/api.models';
+import { API, OS_ICON, STATUS, ERROR_MSGS } from '../core/constants';
 import { IconComponent } from '../shared/components/icon.component';
 import { ToastService } from '../shared/services/toast.service';
 import { HlmButton } from '@spartan-ng/helm/button';
@@ -24,7 +25,6 @@ import { HlmProgressImports } from '@spartan-ng/helm/progress';
     ...HlmProgressImports],
   template: `
     <div class="space-y-6">
-      <!-- Header -->
       <div class="flex flex-wrap items-center justify-between gap-3">
         <div>
           <h1 class="text-2xl font-semibold tracking-tight">Dashboard</h1>
@@ -47,7 +47,6 @@ import { HlmProgressImports } from '@spartan-ng/helm/progress';
       </div>
 
       @if (dashboard(); as data) {
-        <!-- Stat Cards -->
         <div class="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
           <div hlmCard class="relative overflow-hidden p-5 transition-shadow hover:shadow-sm">
             <div class="flex items-center justify-between">
@@ -94,7 +93,6 @@ import { HlmProgressImports } from '@spartan-ng/helm/progress';
         </div>
 
         <div class="grid gap-6 xl:grid-cols-[1.8fr_1fr]">
-          <!-- Device Table -->
           <div hlmCard>
             <div hlmCardHeader class="flex-row items-center justify-between">
               <div>
@@ -125,26 +123,26 @@ import { HlmProgressImports } from '@spartan-ng/helm/progress';
                         <td hlmTd class="font-mono text-sm">{{ device.ipAddress }}</td>
                         <td hlmTd>
                           <span hlmBadge
-                            [class.bg-success/10]="device.lastKnownStatus === 'Online'"
-                            [class.text-success]="device.lastKnownStatus === 'Online'"
-                            [class.bg-destructive/10]="device.lastKnownStatus === 'Offline'"
-                            [class.text-destructive]="device.lastKnownStatus === 'Offline'"
-                            [class.bg-warning/10]="device.lastKnownStatus === 'Unknown'"
-                            [class.text-warning]="device.lastKnownStatus === 'Unknown'"
-                            [class.bg-muted]="!['Online','Offline','Unknown'].includes(device.lastKnownStatus)"
+                            [class.bg-success/10]="device.lastKnownStatus === STATUS.ONLINE"
+                            [class.text-success]="device.lastKnownStatus === STATUS.ONLINE"
+                            [class.bg-destructive/10]="device.lastKnownStatus === STATUS.OFFLINE"
+                            [class.text-destructive]="device.lastKnownStatus === STATUS.OFFLINE"
+                            [class.bg-warning/10]="device.lastKnownStatus === STATUS.UNKNOWN"
+                            [class.text-warning]="device.lastKnownStatus === STATUS.UNKNOWN"
+                            [class.bg-muted]="![STATUS.ONLINE, STATUS.OFFLINE, STATUS.UNKNOWN].includes(device.lastKnownStatus)"
                             class="gap-1"
                           >
                             <span class="h-1.5 w-1.5 rounded-full"
-                              [class.bg-success]="device.lastKnownStatus === 'Online'"
-                              [class.bg-destructive]="device.lastKnownStatus === 'Offline'"
-                              [class.bg-warning]="device.lastKnownStatus === 'Unknown'"
+                              [class.bg-success]="device.lastKnownStatus === STATUS.ONLINE"
+                              [class.bg-destructive]="device.lastKnownStatus === STATUS.OFFLINE"
+                              [class.bg-warning]="device.lastKnownStatus === STATUS.UNKNOWN"
                             ></span>
                             {{ device.lastKnownStatus }}
                           </span>
                         </td>
                         <td hlmTd class="text-sm">
                           <span class="inline-flex items-center gap-1 text-xs text-muted-foreground">
-                            <app-icon [name]="device.operatingSystemType === 'Windows' ? 'monitor' : 'cpu'" size="12" />
+                            <app-icon [name]="deviceOSIcon(device.operatingSystemType)" size="12" />
                             {{ device.operatingSystemType }}
                           </span>
                         </td>
@@ -157,7 +155,6 @@ import { HlmProgressImports } from '@spartan-ng/helm/progress';
             </div>
           </div>
 
-          <!-- Recent Activity -->
           <div hlmCard>
             <div hlmCardHeader>
               <h3 hlmCardTitle>Recent Activity</h3>
@@ -185,9 +182,8 @@ import { HlmProgressImports } from '@spartan-ng/helm/progress';
           </div>
         </div>
       } @else {
-        <!-- Loading State -->
         <div class="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
-          @for (_ of [1,2,3,4]; track $index) {
+          @for (_ of API.SKELETON_FOUR; track $index) {
             <div hlmSkeleton class="h-32 w-full"></div>
           }
         </div>
@@ -205,29 +201,36 @@ export class DashboardPageComponent {
   private readonly toast = inject(ToastService);
   private readonly destroyRef = inject(DestroyRef);
 
+  protected readonly API = API;
+  protected readonly STATUS = STATUS;
+
   readonly dashboard = signal<DashboardResponse | null>(null);
   readonly isBusy = signal(false);
   readonly autoRefresh = signal(false);
-  readonly recentLogLines = computed(() => this.dashboard()?.recentLogs.slice(0, 8) ?? []);
+  readonly recentLogLines = computed(() => this.dashboard()?.recentLogs.slice(0, API.RECENT_LOG_COUNT) ?? []);
 
   constructor() {
     this.load();
-    const sub = interval(10000).subscribe(() => { if (this.autoRefresh()) this.load(); });
+    const sub = interval(API.DASHBOARD_REFRESH_MS).subscribe(() => { if (this.autoRefresh()) this.load(); });
     this.destroyRef.onDestroy(() => sub.unsubscribe());
   }
 
   load(): void {
     this.isBusy.set(true);
-    this.api.getDashboard(true, 20).pipe(finalize(() => this.isBusy.set(false))).subscribe({
+    this.api.getDashboard(true, API.DASHBOARD_LOG_LINES).pipe(finalize(() => this.isBusy.set(false))).subscribe({
       next: r => this.dashboard.set(r),
-      error: e => this.toast.error(e.error?.detail ?? 'Failed to load dashboard')
+      error: () => this.toast.error(ERROR_MSGS.LOAD_DASHBOARD)
     });
   }
 
   createBackup(): void {
     this.api.createBackup().subscribe({
       next: r => { this.toast.success(`Backup created: ${r.archivePath}`); },
-      error: e => this.toast.error(e.error?.detail ?? 'Backup failed')
+      error: () => this.toast.error(ERROR_MSGS.BACKUP)
     });
+  }
+
+  deviceOSIcon(os: string): string {
+    return OS_ICON[os] ?? 'cpu';
   }
 }

@@ -2,6 +2,7 @@ import { ChangeDetectionStrategy, Component, DestroyRef, inject, signal } from '
 import { FormBuilder, ReactiveFormsModule } from '@angular/forms';
 import { interval } from 'rxjs';
 import { ControlApiService } from '../core/control-api.service';
+import { API, ERROR_MSGS } from '../core/constants';
 import { IconComponent } from '../shared/components/icon.component';
 import { HlmButton } from '@spartan-ng/helm/button';
 import { HlmInput } from '@spartan-ng/helm/input';
@@ -41,10 +42,9 @@ import { HlmSwitch } from '@spartan-ng/helm/switch';
           <div class="flex items-center gap-2">
             <input hlmInput class="w-48" placeholder="Filter logs..." [formControl]="filterControl" />
             <select hlmInput class="w-auto" [formControl]="lineCountControl">
-              <option [value]="50">50 lines</option>
-              <option [value]="100">100 lines</option>
-              <option [value]="200">200 lines</option>
-              <option [value]="500">500 lines</option>
+              @for (opt of API.SCAN_LINE_OPTIONS; track opt) {
+                <option [value]="opt">{{ opt }} lines</option>
+              }
             </select>
           </div>
         </div>
@@ -70,7 +70,7 @@ import { HlmSwitch } from '@spartan-ng/helm/switch';
           }
           @if (loading()) {
             <div class="space-y-2 p-4">
-              @for (_ of [1,2,3,4,5,6]; track $index) {
+              @for (_ of API.SKELETON_SIX; track $index) {
                 <div hlmSkeleton class="h-4 w-full"></div>
               }
             </div>
@@ -79,9 +79,7 @@ import { HlmSwitch } from '@spartan-ng/helm/switch';
 
         <div class="flex items-center justify-between border-t px-6 py-2.5">
           <p class="text-xs text-muted-foreground">Showing {{ filteredLines().length }} of {{ lines().length }} entries</p>
-          <button hlmBtn variant="outline" size="xs" (click)="clearLogs()">
-            Clear
-          </button>
+          <button hlmBtn variant="outline" size="xs" (click)="clearLogs()">Clear</button>
         </div>
       </div>
     </div>
@@ -93,12 +91,14 @@ export class LogsPageComponent {
   private readonly formBuilder = inject(FormBuilder).nonNullable;
   private readonly destroyRef = inject(DestroyRef);
 
+  protected readonly API = API;
+
   readonly lines = signal<string[]>([]);
   readonly filteredLines = signal<string[]>([]);
   readonly autoRefresh = signal(false);
   readonly loading = signal(false);
   readonly filterControl = this.formBuilder.control('');
-  readonly lineCountControl = this.formBuilder.control(100);
+  readonly lineCountControl = this.formBuilder.control(API.SCAN_DEFAULT_LINES);
 
   constructor() {
     this.load();
@@ -106,7 +106,7 @@ export class LogsPageComponent {
     this.filterControl.valueChanges.subscribe(() => this.applyFilter());
     this.lineCountControl.valueChanges.subscribe(() => this.load());
 
-    const sub = interval(5000).subscribe(() => { if (this.autoRefresh()) this.load(); });
+    const sub = interval(API.LOGS_REFRESH_MS).subscribe(() => { if (this.autoRefresh()) this.load(); });
     this.destroyRef.onDestroy(() => sub.unsubscribe());
   }
 
@@ -114,9 +114,9 @@ export class LogsPageComponent {
 
   load(): void {
     this.loading.set(true);
-    this.api.getLogs(this.lineCountControl.value ?? 100).subscribe({
+    this.api.getLogs(this.lineCountControl.value ?? API.SCAN_DEFAULT_LINES).subscribe({
       next: r => { this.lines.set(r.lines); this.applyFilter(); this.loading.set(false); },
-      error: () => { this.lines.set(['Error: Unable to load logs from the API.']); this.loading.set(false); }
+      error: () => { this.lines.set([`Error: ${ERROR_MSGS.LOAD_LOGS}`]); this.loading.set(false); }
     });
   }
 

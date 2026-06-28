@@ -1,6 +1,6 @@
 using System.Text.Json.Serialization;
-using ControlOS.Api.DependencyInjection;
 using ControlOS.Api.Features.Shared;
+using ControlOS.Api.Infrastructure.Services;
 using ControlOS.Api.Workers;
 using Microsoft.Extensions.FileProviders;
 
@@ -19,8 +19,16 @@ builder.Services.AddCors(options =>
 });
 
 builder.Services
-    .AddControlOsCoreServices()
+    .AddSingleton<CredentialProtector>()
+    .AddSingleton<DeviceValidatorService>()
+    .AddSingleton<JsonConfigurationStore>()
+    .AddSingleton<DevicePowerService>()
+    .AddSingleton<LogService>()
+    .AddSingleton<BackupRestoreService>()
+    .AddSingleton<ControllerOrchestrator>()
+    .AddSingleton<NetworkScannerService>()
     .AddSingleton<ControlCenterService>()
+    .AddSingleton<WindowsStartupService>()
     .AddHostedService<ControllerAutomationWorker>();
 
 builder.Services.AddControllers()

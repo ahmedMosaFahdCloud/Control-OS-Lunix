@@ -2,6 +2,8 @@ import { ChangeDetectionStrategy, Component, inject, signal } from '@angular/cor
 import { FormBuilder, ReactiveFormsModule } from '@angular/forms';
 import { ControlApiService } from '../core/control-api.service';
 import { GlobalSettings } from '../core/api.models';
+import { DEFAULTS, ERROR_MSGS } from '../core/constants';
+import { environment } from '../../environments/environment';
 import { IconComponent } from '../shared/components/icon.component';
 import { ToastService } from '../shared/services/toast.service';
 import { HlmButton } from '@spartan-ng/helm/button';
@@ -9,6 +11,20 @@ import { HlmInput } from '@spartan-ng/helm/input';
 import { HlmLabel } from '@spartan-ng/helm/label';
 import { HlmSwitch } from '@spartan-ng/helm/switch';
 import { HlmCard, HlmCardHeader, HlmCardTitle, HlmCardDescription, HlmCardContent, HlmCardFooter } from '@spartan-ng/helm/card';
+
+const FORM_DEFAULTS = {
+  autoStartDevicesOnControllerBoot: DEFAULTS.SETTINGS_AUTO_START_BOOT,
+  autoShutdownDevicesOnControllerShutdown: DEFAULTS.SETTINGS_AUTO_SHUTDOWN_STOP,
+  delayBetweenCommandsMs: DEFAULTS.SETTINGS_DELAY_MS,
+  pingTimeoutSeconds: DEFAULTS.SETTINGS_PING_S,
+  sshTimeoutSeconds: DEFAULTS.SETTINGS_SSH_S,
+  retryCount: DEFAULTS.SETTINGS_RETRY,
+  defaultWolPort: DEFAULTS.WOL_PORT,
+  defaultBroadcastAddress: DEFAULTS.BROADCAST_ADDRESS,
+  enableLogs: DEFAULTS.SETTINGS_ENABLE_LOGS,
+  logRetentionDays: DEFAULTS.SETTINGS_LOG_DAYS,
+  confirmManualShutdown: DEFAULTS.SETTINGS_CONFIRM_SHUTDOWN,
+} as const;
 
 @Component({
   selector: 'app-settings-page',
@@ -88,9 +104,7 @@ import { HlmCard, HlmCardHeader, HlmCardTitle, HlmCardDescription, HlmCardConten
                 </div>
               </div>
               <div hlmCardFooter>
-                <button hlmBtn type="submit">
-                  Save Settings
-                </button>
+                <button hlmBtn type="submit">Save Settings</button>
               </div>
             </form>
           </div>
@@ -134,7 +148,7 @@ import { HlmCard, HlmCardHeader, HlmCardTitle, HlmCardDescription, HlmCardConten
               </div>
             </div>
             <div hlmCardContent class="space-y-3 text-sm">
-              <div class="flex justify-between"><span class="text-muted-foreground">API</span><span class="font-mono text-xs">localhost:58432</span></div>
+              <div class="flex justify-between"><span class="text-muted-foreground">API</span><span class="font-mono text-xs">{{ apiBaseUrl }}</span></div>
               <div class="flex justify-between"><span class="text-muted-foreground">Frontend</span><span class="font-mono text-xs">Angular + Tailwind</span></div>
               <div class="flex justify-between"><span class="text-muted-foreground">Auth</span><span class="font-mono text-xs">None (local)</span></div>
             </div>
@@ -150,6 +164,8 @@ export class SettingsPageComponent {
   private readonly formBuilder = inject(FormBuilder).nonNullable;
   private readonly toast = inject(ToastService);
 
+  readonly apiBaseUrl = environment.apiBaseUrl;
+
   readonly message = signal('');
   readonly restorePathControl = this.formBuilder.control('');
 
@@ -160,45 +176,33 @@ export class SettingsPageComponent {
     { key: 'confirmManualShutdown' as const, label: 'Confirm shutdown', desc: 'Require confirmation before shutdown operations.' }
   ];
 
-  readonly form = this.formBuilder.group({
-    autoStartDevicesOnControllerBoot: true,
-    autoShutdownDevicesOnControllerShutdown: true,
-    delayBetweenCommandsMs: 1000,
-    pingTimeoutSeconds: 5,
-    sshTimeoutSeconds: 10,
-    retryCount: 1,
-    defaultWolPort: 9,
-    defaultBroadcastAddress: '255.255.255.255',
-    enableLogs: true,
-    logRetentionDays: 30,
-    confirmManualShutdown: true
-  });
+  readonly form = this.formBuilder.group(FORM_DEFAULTS);
 
   constructor() {
     this.api.getSettings().subscribe({
       next: s => this.form.reset(s as unknown as Record<string, unknown>),
-      error: e => this.toast.error(e.error?.detail ?? 'Failed to load settings.')
+      error: () => this.toast.error(ERROR_MSGS.LOAD_SETTINGS)
     });
   }
 
   save(): void {
     this.api.saveSettings(this.form.getRawValue() as GlobalSettings).subscribe({
       next: () => this.toast.success('Settings saved.'),
-      error: e => this.toast.error(e.error?.detail ?? 'Failed to save settings.')
+      error: () => this.toast.error(ERROR_MSGS.SAVE_SETTINGS)
     });
   }
 
   backup(): void {
     this.api.createBackup().subscribe({
       next: r => { this.restorePathControl.setValue(r.archivePath); this.message.set(r.message); this.toast.success('Backup created.'); },
-      error: e => this.toast.error(e.error?.detail ?? 'Backup failed.')
+      error: () => this.toast.error(ERROR_MSGS.BACKUP)
     });
   }
 
   restore(): void {
     this.api.restoreBackup(this.restorePathControl.getRawValue()).subscribe({
       next: r => this.toast.success(r.message),
-      error: e => this.toast.error(e.error?.detail ?? 'Restore failed.')
+      error: () => this.toast.error(ERROR_MSGS.RESTORE)
     });
   }
 }
