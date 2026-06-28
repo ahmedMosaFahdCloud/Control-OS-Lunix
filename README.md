@@ -1,96 +1,137 @@
 # Control-OS-Lunix
 
-Control-OS-Lunix is a Windows desktop application for managing the power lifecycle of Linux devices on a local network. It provides Wake-on-LAN startup, SSH-based shutdown and reboot, network discovery, startup/shutdown automation, activity logs, and backup/restore for application data.
+Control-OS-Lunix is a Windows-first network power control platform for managing Linux devices on a local network through a modern web UI instead of a desktop UI.
 
-The application is built with WinForms on .NET 8 and has been refactored into a layered structure using Dependency Injection, a local Result pattern, and strict MVC for every screen.
+The current architecture is split into three runtime layers:
 
-## What The App Does
+- `ControlOS.Agent`
+  A local Windows worker/console host responsible for controller startup and shutdown automation.
+- `ControlOS.Api`
+  An ASP.NET Core Web API that exposes devices, settings, logs, backups, and network scanning.
+- `control-os-web`
+  An Angular 21 standalone frontend built with Tailwind and `spartan.ng`.
+
+The original WinForms project is still in the repository as a legacy reference, but it is no longer the primary solution path.
+
+## What The Platform Does
 
 - Start remote devices using Wake-on-LAN.
 - Reboot and shut down Linux devices over SSH.
 - Scan the local network for reachable hosts and capture IP, host name, and MAC address when available.
 - Maintain a managed device list with per-device power settings.
-- Automatically start devices when the controller machine boots the app.
-- Automatically shut down devices when Windows is shutting down or when the app closes.
-- Store operation logs and show them in a dedicated logs screen.
+- Automatically start devices when the controller machine boots.
+- Automatically shut down devices when the controller process stops.
+- Store operation logs and expose them through the API and web UI.
 - Create and restore backup archives for configuration and logs.
 
-## Main Screens
+## Web Areas
 
-- `Main Dashboard`
-  Shows device status, summary cards, quick actions, settings, logs, backup, and restore.
-- `Device Dialog`
-  Add or edit a managed device with Wake-on-LAN and SSH settings.
-- `Settings`
-  Configure controller behavior, delays, timeouts, retries, logging, and shutdown confirmation.
+- `Dashboard`
+  Summary cards, recent activity, device overview, and backup actions.
+- `Devices`
+  Create, edit, delete, and operate managed devices.
+- `Scanner`
+  Scan the subnet and convert reachable hosts into managed devices.
 - `Logs`
-  Review recent controller and device operations.
-- `Network Scanner`
-  Scan a subnet, review online hosts, and create a device draft from scan results.
+  Review controller and device activity from the browser.
+- `Settings`
+  Manage timeouts, automation, logging, and restore workflow.
 
-## Key Features
+## Solution Structure
 
-- Strict MVC separation for each WinForms screen.
-- `Result` and `Result<T>` used for expected operation failures instead of exception-driven flow.
-- Dependency Injection with `Microsoft.Extensions.DependencyInjection`.
-- UI and backend separation in one project:
-  - `UI/Views`
-  - `UI/Controllers`
-  - `UI/ViewModels`
-  - `Backend/Models`
-  - `Backend/Interfaces`
-  - `Backend/Services`
-  - `Backend/Results`
-  - `Composition`
-- Modernized WinForms styling for a cleaner dashboard-focused UX.
+```text
+Control-OS-Lunix/
+├─ src/
+│  ├─ ControlOS.Core/
+│  ├─ ControlOS.Api/
+│  └─ ControlOS.Agent/
+├─ web/
+│  └─ control-os-web/
+├─ Control-OS-Lunix/         # legacy WinForms reference code
+└─ Control-OS-Linux.sln
+```
+
+## Project Roles
+
+### ControlOS.Core
+
+Shared backend models, interfaces, services, and result types. This layer contains the reusable power-control logic used by both the API and the agent.
+
+### ControlOS.Api
+
+The HTTP bridge between the browser UI and local controller services.
+
+Main responsibilities:
+
+- dashboard data
+- device CRUD
+- manual start/reboot/shutdown
+- settings management
+- network scanning
+- logs
+- backup and restore
+
+Default local URL:
+
+`http://localhost:5081`
+
+### ControlOS.Agent
+
+The local automation host for Windows.
+
+Main responsibilities:
+
+- register startup with Windows
+- run controller startup automation
+- run controller shutdown automation when the host stops
+
+### control-os-web
+
+The Angular frontend that replaces the desktop UX.
+
+Main frontend characteristics:
+
+- standalone components
+- typed API contracts
+- Tailwind CSS
+- local `spartan.ng`-style primitives and layout
+- browser-based control plane
 
 ## Technology Stack
 
 - .NET 8
-- Windows Forms
-- C#
+- ASP.NET Core Web API
+- .NET Worker Service
+- Angular 21
+- Tailwind CSS
+- `spartan.ng`
 - `Microsoft.Extensions.DependencyInjection`
 - `SSH.NET`
 - Windows DPAPI for password protection
 
-## Project Structure
-
-```text
-Control-OS-Lunix/
-├─ Control-OS-Lunix/
-│  ├─ Backend/
-│  │  ├─ Interfaces/
-│  │  ├─ Models/
-│  │  ├─ Results/
-│  │  └─ Services/
-│  ├─ Composition/
-│  ├─ UI/
-│  │  ├─ Controllers/
-│  │  ├─ ViewModels/
-│  │  └─ Views/
-│  ├─ Program.cs
-│  └─ Control-OS-Linux.csproj
-└─ Control-OS-Linux.sln
-```
-
-## How Remote Power Works
+## Remote Power Model
 
 ### Start
 
-The app sends a Wake-on-LAN magic packet to the device MAC address and broadcast address configured for that device.
+The platform sends a Wake-on-LAN magic packet to the configured MAC address and broadcast address.
 
 ### Shutdown / Reboot
 
-The app connects over SSH and runs:
+The platform connects over SSH and uses `systemctl` commands through `sudo`.
 
-- `sudo -n /usr/bin/systemctl poweroff`
-- `sudo -n /usr/bin/systemctl reboot`
+If the Linux target requires a sudo password and the device has an SSH password configured, the backend attempts a fallback using `sudo -S`.
 
-If the Linux machine requires a sudo password and the device has an SSH password configured, the app attempts a fallback using `sudo -S`.
+## Windows-Specific Notes
 
-## Windows Shutdown Awareness
+This platform is intentionally Windows-centric on the controller side.
 
-The main dashboard listens for Windows shutdown/session-end messages. When Windows begins shutting down, the app can block the shutdown briefly, run the controller shutdown sequence, and then allow Windows to continue. This is how remote auto-shutdown is triggered during system shutdown rather than only when the user closes the app manually.
+Reasons:
+
+- DPAPI is used for SSH password protection.
+- Windows registry startup registration is used.
+- Controller lifecycle automation is designed around a Windows host.
+
+For that reason, the backend runtime projects target `net8.0-windows`.
 
 ## Data Storage
 
@@ -106,77 +147,29 @@ Typical files:
 
 ## Security Notes
 
-- SSH passwords are not stored as plain text in the JSON file.
+- SSH passwords are not stored as plain text in persisted JSON.
 - Passwords are protected using Windows DPAPI with `DataProtectionScope.CurrentUser`.
-- This means encrypted secrets are tied to the current Windows user profile.
-- If the configuration file is copied to another Windows user or another machine, protected passwords may not decrypt successfully there.
-- Backup archives include the stored encrypted configuration and logs, so restoring on a different user profile may require re-entering SSH passwords.
+- Protected credentials are tied to the current Windows user profile.
+- Restoring backups on another user profile or another machine may require re-entering SSH passwords.
 
-## Backup And Restore
+## Build
 
-The dashboard includes:
-
-- `Backup Data`
-  Creates a `.zip` archive containing the current application data.
-- `Restore Data`
-  Restores configuration and logs from a selected backup archive.
-
-After restore, the application reloads configuration and refreshes the dashboard.
-
-## Linux Device Requirements
-
-For reliable shutdown and reboot:
-
-- SSH must be enabled on the target Linux machine.
-- The configured username and password must be valid.
-- `systemctl` must be available.
-- The account should be allowed to run shutdown/reboot commands.
-
-For passwordless sudo, you can configure sudoers appropriately. If passwordless sudo is not enabled, the app may still succeed using the stored SSH password through the `sudo -S` fallback.
-
-## Build And Run
-
-### Requirements
-
-- Windows
-- .NET 8 SDK
-- Network access to target devices
-
-### Build
+### Backend
 
 ```powershell
-dotnet build .\Control-OS-Linux.sln
+dotnet build .\src\ControlOS.Api\ControlOS.Api.csproj
+dotnet build .\src\ControlOS.Agent\ControlOS.Agent.csproj
 ```
 
-### Run
+### Frontend
 
 ```powershell
-dotnet run --project .\Control-OS-Lunix\Control-OS-Linux.csproj
+cd .\web\control-os-web
+npm run build
 ```
 
-## Typical Workflow
+## Notes
 
-1. Open the app.
-2. Add a device manually or scan the subnet from the Network Scanner screen.
-3. Verify MAC address, broadcast address, SSH host, and credentials.
-4. Test `Start`, `Reboot`, and `Shutdown`.
-5. Configure automation in Settings if you want controller startup/shutdown behavior.
-6. Use `Backup Data` after your configuration is ready.
-
-## Current Limitations
-
-- The application targets Windows only because it depends on WinForms and Windows-specific APIs.
-- Password protection is user-profile scoped because of DPAPI.
-- Wake-on-LAN requires a valid MAC address and a network path that allows broadcast packets.
-- MAC address discovery during scanning depends on ARP availability and may be empty for some hosts.
-
-## Notes For Developers
-
-- Keep expected failures in the `Result` flow instead of throwing exceptions for normal validation or connectivity issues.
-- Keep business logic inside backend services and controllers, not WinForms views.
-- Do not add WinForms dependencies into `Backend`.
-- Register new services, controllers, and views through `Composition/ServiceRegistration.cs`.
-
-## License
-
-No license file is currently included in this repository.
+- The Angular UI is now the preferred presentation layer.
+- The legacy WinForms project remains in the repository only as reference code during migration.
+- The solution file now focuses on the new `Core + Api + Agent` backend structure.

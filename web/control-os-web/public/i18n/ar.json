@@ -1,0 +1,22 @@
+{
+  "app.title": "Control OS",
+  "app.subtitle": "بدء التشغيل والتحكم",
+  "nav.dashboard": "لوحة التحكم",
+  "nav.devices": "الأجهزة",
+  "nav.scanner": "الماسح الضوئي",
+  "nav.logs": "السجلات",
+  "nav.settings": "الإعدادات",
+  "page.dashboard.title": "لوحة التحكم",
+  "page.dashboard.desc": "نظرة عامة فورية على الأجهزة المُدارة ونشاط النظام.",
+  "page.devices.title": "الأجهزة",
+  "page.devices.desc": "إدارة الأجهزة البعيدة، تكوين الأتمتة، وتشغيل إجراءات الطاقة.",
+  "page.scanner.title": "ماسح الشبكة",
+  "page.scanner.desc": "اكتشاف الأجهزة القابلة للوصول وإضافتها كأجهزة مُدارة.",
+  "page.logs.title": "سجلات النظام",
+  "page.logs.desc": "أحداث المتحكم وتدفق نشاط الأجهزة.",
+  "page.settings.title": "الإعدادات",
+  "page.settings.desc": "سلوك المتحكم، المهلات، وإدارة البيانات.",
+  "api.offline.title": "فقدان الاتصال",
+  "api.offline.message": "لا يمكن الوصول إلى خادم API. تحقق من تشغيل الخدمة الخلفية.",
+  "api.offline.retry": "إعادة المحاولة"
+}

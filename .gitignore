@@ -1,0 +1,32 @@
+# .NET
+bin/
+obj/
+*.user
+*.suo
+*.userosscache
+*.sln.docstates
+
+# Visual Studio
+.vs/
+.vscode/
+
+# Node / Angular
+node_modules/
+web/control-os-web/dist/
+
+# Angular build output (copied to .NET projects)
+src/**/wwwroot/
+
+# OS
+Thumbs.db
+.DS_Store
+Desktop.ini
+
+# IDE
+.idea/
+*.swp
+*.swo
+
+# Config backup data
+config/
+logs/

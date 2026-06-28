@@ -1,0 +1,22 @@
+{
+  "app.title": "Control OS",
+  "app.subtitle": "Device Management Controller",
+  "nav.dashboard": "Dashboard",
+  "nav.devices": "Devices",
+  "nav.scanner": "Scanner",
+  "nav.logs": "Logs",
+  "nav.settings": "Settings",
+  "page.dashboard.title": "Dashboard",
+  "page.dashboard.desc": "Real-time overview of managed devices and system activity.",
+  "page.devices.title": "Devices",
+  "page.devices.desc": "Manage remote hosts, configure automation, and trigger power actions.",
+  "page.scanner.title": "Network Scanner",
+  "page.scanner.desc": "Discover reachable hosts and add them as managed devices.",
+  "page.logs.title": "System Logs",
+  "page.logs.desc": "Controller events and device activity stream.",
+  "page.settings.title": "Settings",
+  "page.settings.desc": "Controller behavior, timeouts, and data management.",
+  "api.offline.title": "Connection Lost",
+  "api.offline.message": "Cannot reach the API server. Check if the backend is running.",
+  "api.offline.retry": "Retry"
+}
