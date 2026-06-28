@@ -134,7 +134,7 @@ import { HlmCard, HlmCardHeader, HlmCardTitle, HlmCardDescription, HlmCardConten
               </div>
             </div>
             <div hlmCardContent class="space-y-3 text-sm">
-              <div class="flex justify-between"><span class="text-muted-foreground">API</span><span class="font-mono text-xs">localhost:5081</span></div>
+              <div class="flex justify-between"><span class="text-muted-foreground">API</span><span class="font-mono text-xs">localhost:58432</span></div>
               <div class="flex justify-between"><span class="text-muted-foreground">Frontend</span><span class="font-mono text-xs">Angular + Tailwind</span></div>
               <div class="flex justify-between"><span class="text-muted-foreground">Auth</span><span class="font-mono text-xs">None (local)</span></div>
             </div>

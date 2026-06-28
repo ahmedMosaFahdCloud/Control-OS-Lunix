@@ -14,7 +14,7 @@ public sealed class TrayApp : ApplicationContext
     private Task? _apiTask;
 
     private const string AppTitle = "Control OS";
-    private const string AppUrl = "http://localhost:5081";
+    private const string AppUrl = "http://localhost:58432";
     private const string AutoStartKey = @"Software\Microsoft\Windows\CurrentVersion\Run";
 
     public TrayApp()

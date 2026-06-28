@@ -82,7 +82,7 @@ Main responsibilities:
 
 Default local URL:
 
-`http://localhost:5081`
+`http://localhost:58432`
 
 ### ControlOS.Agent
 
@@ -97,7 +97,7 @@ Main responsibilities:
 ### ControlOS.Tray
 
 The recommended desktop launcher. A WinForms system-tray app that:
-- Starts the entire ASP.NET Core API in-process (`http://localhost:5081`)
+- Starts the entire ASP.NET Core API in-process (`http://localhost:58432`)
 - Serves the Angular SPA from `wwwroot/browser/`
 - Shows a status window (minimizes to tray on close)
 - Auto-opens the dashboard in your default browser
@@ -203,7 +203,7 @@ The output is at `src\ControlOS.Tray\bin\Debug\net8.0-windows\ControlOS.exe`.
 .\src\ControlOS.Tray\bin\Debug\net8.0-windows\ControlOS.exe
 ```
 
-The app will open your browser to `http://localhost:5081` and add an icon to the system tray.
+The app will open your browser to `http://localhost:58432` and add an icon to the system tray.
 
 ### Build Individual Components
 

@@ -17,7 +17,7 @@ import {
 @Injectable({ providedIn: 'root' })
 export class ControlApiService {
   private readonly http = inject(HttpClient);
-  private readonly apiBaseUrl = isDevMode() ? 'http://localhost:5081/api' : '/api';
+  private readonly apiBaseUrl = isDevMode() ? 'http://localhost:58432/api' : '/api';
 
   getDashboard(refresh = true, logLines = 20): Observable<DashboardResponse> {
     const params = new HttpParams()

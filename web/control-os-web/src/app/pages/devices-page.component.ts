@@ -97,10 +97,7 @@ type DeviceTab = 'all' | 'password' | 'nopassword';
             Refresh
           </button>
 
-          <button hlmBtn type="button" (click)="resetForm()">
-            <app-icon name="plus" [size]="16"></app-icon>
-            Add Device
-          </button>
+
         </div>
       </div>
 

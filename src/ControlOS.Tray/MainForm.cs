@@ -6,7 +6,7 @@ namespace ControlOS.Tray;
 public sealed class MainForm : Form
 {
     private const string AppTitle = "Control OS";
-    private const string AppUrl = "http://localhost:5081";
+    private const string AppUrl = "http://localhost:58432";
     private bool _allowClose;
 
     public MainForm()
