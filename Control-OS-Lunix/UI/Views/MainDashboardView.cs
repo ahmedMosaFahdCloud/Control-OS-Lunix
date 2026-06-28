@@ -1,5 +1,6 @@
 using System.Runtime.InteropServices;
 using Control_OS_Lunix.UI.ViewModels;
+using Microsoft.Win32;
 
 namespace Control_OS_Lunix.UI.Views;
 
@@ -49,6 +50,7 @@ public sealed class MainDashboardView : Form, IMainDashboardView
         };
         BuildLayout();
         WireEvents();
+        SystemEvents.SessionEnding += HandleSessionEnding;
     }
 
     public event EventHandler? ViewLoaded;
@@ -159,7 +161,7 @@ public sealed class MainDashboardView : Form, IMainDashboardView
     {
         if (m.Msg == WmQueryEndSession && WindowsShutdownHandler is not null)
         {
-            WindowsShutdownDecision decision = WindowsShutdownHandler.Invoke();
+            WindowsShutdownDecision decision = ExecuteWindowsShutdownDecision();
             if (!string.IsNullOrWhiteSpace(decision.BlockReason))
             {
                 ShutdownBlockReasonCreate(Handle, decision.BlockReason);
@@ -175,6 +177,20 @@ public sealed class MainDashboardView : Form, IMainDashboardView
         }
 
         base.WndProc(ref m);
+    }
+
+    private void HandleSessionEnding(object? sender, SessionEndingEventArgs args)
+    {
+        if (WindowsShutdownHandler is null)
+        {
+            return;
+        }
+
+        WindowsShutdownDecision decision = ExecuteWindowsShutdownDecision();
+        if (!decision.AllowSessionEnd)
+        {
+            args.Cancel = true;
+        }
     }
 
     private void BuildLayout()
@@ -214,6 +230,7 @@ public sealed class MainDashboardView : Form, IMainDashboardView
         FormClosing += HandleFormClosing;
         FormClosed += (_, _) =>
         {
+            SystemEvents.SessionEnding -= HandleSessionEnding;
             _trayIcon.Visible = false;
             _trayIcon.Dispose();
             _trayMenu.Dispose();
@@ -291,6 +308,11 @@ public sealed class MainDashboardView : Form, IMainDashboardView
     {
         _exitRequested = true;
         Close();
+    }
+
+    private WindowsShutdownDecision ExecuteWindowsShutdownDecision()
+    {
+        return WindowsShutdownHandler?.Invoke() ?? new WindowsShutdownDecision();
     }
 
     private void UpdateSelectionButtons()

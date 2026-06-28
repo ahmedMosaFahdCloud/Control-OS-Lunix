@@ -12,6 +12,9 @@ public sealed class DevicePowerService : IDevicePowerService
 {
     private const string InteractiveAuthenticationMessage = "interactive authentication is required";
     private const string PasswordRequiredMessage = "a password is required";
+    private const string ConnectionClosedMessage = "connection was closed";
+    private const string ConnectionLostMessage = "connection lost";
+    private const string SocketClosedMessage = "socket is closed";
 
     public async Task<Result<DevicePowerReport>> GetReportAsync(
         DevicePowerConfig device,
@@ -57,19 +60,36 @@ public sealed class DevicePowerService : IDevicePowerService
 
     public Task<Result> ShutdownAsync(DevicePowerConfig device, int timeoutSeconds, CancellationToken cancellationToken = default)
     {
-        return RunSshCommandAsync(device, "sudo -n /usr/bin/systemctl poweroff", timeoutSeconds, cancellationToken);
+        return RunPrivilegedPowerCommandAsync(device, "/usr/bin/systemctl poweroff", timeoutSeconds, cancellationToken);
     }
 
     public Task<Result> RebootAsync(DevicePowerConfig device, int timeoutSeconds, CancellationToken cancellationToken = default)
     {
-        return RunSshCommandAsync(device, "sudo -n /usr/bin/systemctl reboot", timeoutSeconds, cancellationToken);
+        return RunPrivilegedPowerCommandAsync(device, "/usr/bin/systemctl reboot", timeoutSeconds, cancellationToken);
+    }
+
+    private static Task<Result> RunPrivilegedPowerCommandAsync(
+        DevicePowerConfig device,
+        string privilegedCommand,
+        int timeoutSeconds,
+        CancellationToken cancellationToken)
+    {
+        return RunSshCommandAsync(
+            device,
+            BuildDetachedSudoCommand(privilegedCommand),
+            timeoutSeconds,
+            cancellationToken,
+            allowConnectionDropAsSuccess: true,
+            fallbackCommandFactory: password => BuildDetachedSudoPasswordCommand(password, privilegedCommand));
     }
 
     private static Task<Result> RunSshCommandAsync(
         DevicePowerConfig device,
         string command,
         int timeoutSeconds,
-        CancellationToken cancellationToken)
+        CancellationToken cancellationToken,
+        bool allowConnectionDropAsSuccess = false,
+        Func<string, string>? fallbackCommandFactory = null)
     {
         return Task.Run(() =>
         {
@@ -98,10 +118,12 @@ public sealed class DevicePowerService : IDevicePowerService
 
                 if (CanRetryWithSudoPassword(device, command, commandResult))
                 {
-                    string fallbackCommand = BuildSudoPasswordCommand(device.SshPassword, command);
+                    string fallbackCommand = fallbackCommandFactory is null
+                        ? BuildSudoPasswordCommand(device.SshPassword, command)
+                        : fallbackCommandFactory(device.SshPassword);
                     SshCommandResult fallbackResult = ExecuteCommand(sshClient, fallbackCommand);
 
-                    if (fallbackResult.ExitStatus == 0)
+                    if (fallbackResult.ExitStatus == 0 || (allowConnectionDropAsSuccess && IsExpectedConnectionDrop(fallbackResult)))
                     {
                         sshClient.Disconnect();
                         return Result.Success();
@@ -118,6 +140,11 @@ public sealed class DevicePowerService : IDevicePowerService
             }
             catch (Exception exception)
             {
+                if (allowConnectionDropAsSuccess && IsExpectedConnectionDrop(exception.Message))
+                {
+                    return Result.Success();
+                }
+
                 return Result.Failure("device.ssh.failed", exception.Message);
             }
         }, cancellationToken);
@@ -147,9 +174,33 @@ public sealed class DevicePowerService : IDevicePowerService
         return $"printf '%s\\n' '{escapedPassword}' | sudo -S -p '' {privilegedCommand}";
     }
 
+    private static string BuildDetachedSudoCommand(string privilegedCommand)
+    {
+        return $"sudo -n sh -c 'nohup {privilegedCommand} >/dev/null 2>&1 &'";
+    }
+
+    private static string BuildDetachedSudoPasswordCommand(string password, string privilegedCommand)
+    {
+        string escapedPassword = EscapeSingleQuotedShellValue(password);
+        return $"printf '%s\\n' '{escapedPassword}' | sudo -S -p '' sh -c 'nohup {privilegedCommand} >/dev/null 2>&1 &'";
+    }
+
     private static string EscapeSingleQuotedShellValue(string value)
     {
         return value.Replace("'", "'\"'\"'", StringComparison.Ordinal);
+    }
+
+    private static bool IsExpectedConnectionDrop(SshCommandResult result)
+    {
+        return IsExpectedConnectionDrop($"{result.Error} {result.Output}");
+    }
+
+    private static bool IsExpectedConnectionDrop(string message)
+    {
+        string value = message.ToLowerInvariant();
+        return value.Contains(ConnectionClosedMessage, StringComparison.Ordinal) ||
+               value.Contains(ConnectionLostMessage, StringComparison.Ordinal) ||
+               value.Contains(SocketClosedMessage, StringComparison.Ordinal);
     }
 
     private static SshCommandResult ExecuteCommand(SshClient sshClient, string commandText)

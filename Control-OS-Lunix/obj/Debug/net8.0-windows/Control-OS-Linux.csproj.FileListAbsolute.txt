@@ -4,6 +4,7 @@ E:\desktop\Control-OS-Lunix\Control-OS-Lunix\bin\Debug\net8.0-windows\Control-OS
 E:\desktop\Control-OS-Lunix\Control-OS-Lunix\bin\Debug\net8.0-windows\Control-OS-Linux.dll
 E:\desktop\Control-OS-Lunix\Control-OS-Lunix\bin\Debug\net8.0-windows\Control-OS-Linux.pdb
 E:\desktop\Control-OS-Lunix\Control-OS-Lunix\bin\Debug\net8.0-windows\BouncyCastle.Cryptography.dll
+E:\desktop\Control-OS-Lunix\Control-OS-Lunix\bin\Debug\net8.0-windows\Microsoft.Extensions.DependencyInjection.dll
 E:\desktop\Control-OS-Lunix\Control-OS-Lunix\bin\Debug\net8.0-windows\Microsoft.Extensions.DependencyInjection.Abstractions.dll
 E:\desktop\Control-OS-Lunix\Control-OS-Lunix\bin\Debug\net8.0-windows\Microsoft.Extensions.Logging.Abstractions.dll
 E:\desktop\Control-OS-Lunix\Control-OS-Lunix\bin\Debug\net8.0-windows\Renci.SshNet.dll
@@ -12,11 +13,10 @@ E:\desktop\Control-OS-Lunix\Control-OS-Lunix\obj\Debug\net8.0-windows\Control-OS
 E:\desktop\Control-OS-Lunix\Control-OS-Lunix\obj\Debug\net8.0-windows\Control-OS-Linux.AssemblyInfoInputs.cache
 E:\desktop\Control-OS-Lunix\Control-OS-Lunix\obj\Debug\net8.0-windows\Control-OS-Linux.AssemblyInfo.cs
 E:\desktop\Control-OS-Lunix\Control-OS-Lunix\obj\Debug\net8.0-windows\Control-OS-Linux.csproj.CoreCompileInputs.cache
+E:\desktop\Control-OS-Lunix\Control-OS-Lunix\obj\Debug\net8.0-windows\Control-OS-Linux.sourcelink.json
 E:\desktop\Control-OS-Lunix\Control-OS-Lunix\obj\Debug\net8.0-windows\Control-.F2EC2A8D.Up2Date
 E:\desktop\Control-OS-Lunix\Control-OS-Lunix\obj\Debug\net8.0-windows\Control-OS-Linux.dll
 E:\desktop\Control-OS-Lunix\Control-OS-Lunix\obj\Debug\net8.0-windows\refint\Control-OS-Linux.dll
 E:\desktop\Control-OS-Lunix\Control-OS-Lunix\obj\Debug\net8.0-windows\Control-OS-Linux.pdb
 E:\desktop\Control-OS-Lunix\Control-OS-Lunix\obj\Debug\net8.0-windows\Control-OS-Linux.genruntimeconfig.cache
 E:\desktop\Control-OS-Lunix\Control-OS-Lunix\obj\Debug\net8.0-windows\ref\Control-OS-Linux.dll
-E:\desktop\Control-OS-Lunix\Control-OS-Lunix\obj\Debug\net8.0-windows\Control-OS-Linux.sourcelink.json
-E:\desktop\Control-OS-Lunix\Control-OS-Lunix\bin\Debug\net8.0-windows\Microsoft.Extensions.DependencyInjection.dll
